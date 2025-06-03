@@ -147,13 +147,13 @@ def main():
             exit(2)
 
         if args.create:
-            actions.applyAllCreate(diff, print)
+            actions.applyAllCreate(diff, reports.terminalPrint)
 
         if args.delete:
-            actions.applyAllDelete(diff, print)
+            actions.applyAllDelete(diff, reports.terminalPrint)
 
         if args.modify:
-            actions.applyAllModify(diff, print)
+            actions.applyAllModify(diff, reports.terminalPrint)
 
 
 if __name__ == '__main__':
