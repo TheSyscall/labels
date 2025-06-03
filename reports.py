@@ -56,9 +56,9 @@ def createMakrdownReport(diff: LabelDiff):
 def terminalPrint(diff: LabelDiff, action: str, label: dict):
     print(f"{diff.namespace}/{diff.repository}: ", end='')
     if action == 'delete':
-        print(f"delete {label['name']}")
+        print(f"delete '{label['name']}'")
     elif action == 'create':
-        print(f"create {label['name']} ({label['description']})")
+        print(f"create '{label['name']}' ({label['description']})")
     elif action == 'modify':
         changes = []
         if 'color' in label['delta']:

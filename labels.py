@@ -59,7 +59,7 @@ def parse_arguments():
         "--format",
         choices=["markdown", "json"],
         default="markdown",
-        help="Output format (default: json)")
+        help="Output format (default: markdown)")
 
     sync_parser = subparsers.add_parser(
         "sync",
@@ -94,7 +94,31 @@ def parse_arguments():
         action="store_true",
         help="Automatically modify existing labels")
 
+    sync_parser.add_argument(
+        "-y",
+        "--assumeyes",
+        action="store_true",
+        help="Automatically answer yes for all questions")
+
+    sync_parser.add_argument(
+        "-f",
+        "--format",
+        choices=["markdown", "json", "none"],
+        default="none",
+        help="Output format (default: none)")
+
     return parser.parse_args()
+
+
+def _report(format: str, diff: label_diff.LabelDiff):
+    if format == "markdown":
+        print(reports.createMakrdownReport(diff))
+    elif format == "json":
+        print(reports.createJsonReport(diff))
+    elif format == "none":
+        pass  # Nothing to do
+    else:
+        print(f"Unsupported format '{format}'", file=sys.stderr)
 
 
 def main():
@@ -117,12 +141,7 @@ def main():
 
         diff = label_diff.createDiff(truth, repo, namespace, repository)
 
-        if args.format == "markdown":
-            print(reports.createMakrdownReport(diff))
-        elif args.format == "json":
-            print(reports.createJsonReport(diff))
-        else:
-            print(f"Unsupported format '{args.format}'", file=sys.stderr)
+        _report(args.format, diff)
 
     elif args.command == 'sync':
         truth = loadSource(args.source)
@@ -147,13 +166,15 @@ def main():
             exit(2)
 
         if args.create:
-            actions.applyAllCreate(diff, reports.terminalPrint)
+            actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
 
         if args.delete:
-            actions.applyAllDelete(diff, reports.terminalPrint)
+            actions.applyAllDelete(diff, args.assumeyes, reports.terminalPrint)
 
         if args.modify:
-            actions.applyAllModify(diff, reports.terminalPrint)
+            actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
+
+        _report(args.format, diff)
 
 
 if __name__ == '__main__':
