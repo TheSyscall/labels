@@ -1,6 +1,7 @@
 import json
 from label_diff import LabelDiff
 
+
 def createJsonReport(diff: LabelDiff):
     return json.dumps({
         'valid': diff.valid,
