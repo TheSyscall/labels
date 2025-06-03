@@ -4,7 +4,7 @@ import os
 
 def fetchJson(endpoint: str, params=None, body={}, method="GET"):
     # NO-COMMIT: Hardcoded label
-    token = os.getenv('GITHUB_TOKEN')
+    token = os.getenv('GITHUB_ACCESS_TOKEN')
 
     if token is None or token == '':
         return "No API Token Provided", -500

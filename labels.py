@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import github_api
@@ -44,6 +45,11 @@ def parse_arguments():
         help="Report the current state of the labels")
 
     report_parser.add_argument(
+        "-T",
+        "--token",
+        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)")
+
+    report_parser.add_argument(
         "target",
         metavar="namespace/repo",
         help="GitHub target in the format namespace/repo or namespace")
@@ -64,6 +70,11 @@ def parse_arguments():
     sync_parser = subparsers.add_parser(
         "sync",
         help="Sync labels with a target")
+
+    sync_parser.add_argument(
+        "-T",
+        "--token",
+        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)")
 
     sync_parser.add_argument(
         "target",
@@ -123,6 +134,9 @@ def _report(format: str, diff: label_diff.LabelDiff):
 
 def main():
     args = parse_arguments()
+
+    if args.token is not None:
+        os.environ["GITHUB_ACCESS_TOKEN"] = args.token
 
     if args.command == 'report':
         truth = loadSource(args.source)
