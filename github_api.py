@@ -2,8 +2,7 @@ import requests
 import os
 
 
-def fetchJson(endpoint: str, params=None, body={}, method="GET"):
-    # NO-COMMIT: Hardcoded label
+def fetchJson(endpoint: str, params={}, body={}, method="GET"):
     token = os.getenv('GITHUB_ACCESS_TOKEN')
 
     if token is None or token == '':
@@ -22,17 +21,21 @@ def fetchJson(endpoint: str, params=None, body={}, method="GET"):
     match(method):
         case 'GET':
             response = requests.get(base_url + endpoint,
+                                    params=params,
                                     headers=headers)
         case 'POST':
             response = requests.post(base_url + endpoint,
+                                     params=params,
                                      json=body,
                                      headers=headers)
         case 'PATCH':
             response = requests.patch(base_url + endpoint,
+                                      params=params,
                                       json=body,
                                       headers=headers)
         case 'DELETE':
             response = requests.delete(base_url + endpoint,
+                                       params=params,
                                        headers=headers)
 
     result = response.content
@@ -42,6 +45,13 @@ def fetchJson(endpoint: str, params=None, body={}, method="GET"):
         pass
 
     return (result, response.status_code)
+
+
+def fetchPaginatedJson(endpoint: str, params={}, body={}, method="GET"):
+    # TODO: Implement pagination
+    params['page'] = 1
+    params['per_page'] = 100
+    return fetchJson(endpoint, params, body, method)
 
 
 def fetchLabels(namespace: str, repository: str):
@@ -126,3 +136,22 @@ def updateLabel(
         return {}, data
     else:
         return False, 'Unknown error'
+
+
+def fetchRepositories(namespace: str):
+    if namespace == '-':
+        (data, code) = fetchPaginatedJson("/user/repos")
+    else:
+        (data, code) = fetchPaginatedJson(f"/orgs/{namespace}/repos")
+        if code == 404:
+            # FIXME: This only returns public repositories
+            (data, code) = fetchPaginatedJson(f"/users/{namespace}/repos")
+
+    if code >= 200 and code < 300:
+        return data, None
+    elif code == 404:
+        return {}, 'Resource not found'
+    elif code < 0:
+        return {}, data
+    else:
+        return {}, 'Unknown error'

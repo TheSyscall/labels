@@ -147,92 +147,55 @@ def _report(format: str, diffs: list[label_diff.LabelDiff]):
         print(f"Unsupported format '{format}'", file=sys.stderr)
 
 
-def main():
-    args = parse_arguments()
+def command_report_namespace(args, namespace, truth):
+    (repos, err) = github_api.fetchRepositories(namespace)
+    if err is not None:
+        print(err, file=sys.stderr)
+        exit(1)
 
-    if args.token is not None:
-        os.environ["GITHUB_ACCESS_TOKEN"] = args.token
+    diffs = []
 
-    if args.command == 'report':
-        truth = loadSource(args.source)
+    for repo in repos:
+        _namespace = repo["owner"]["login"]
+        _repo = repo["name"]
 
-        (namespace, repository) = parseTarget(args.target)
-
-        if repository is None:
-            (repos, err) = github_api.fetchRepositories(namespace)
-            if err is not None:
-                print(err, file=sys.stderr)
-                exit(1)
-
-            diffs = []
-
-            for repo in repos:
-                _namespace = repo["owner"]["login"]
-                _repo = repo["name"]
-
-                (repo_lables, err) = github_api.fetchLabels(_namespace, _repo)
-                if err is not None:
-                    print(err, file=sys.stderr)
-                    exit(1)
-
-                diffs.append(label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias))
-
-            _report(args.format, diffs)
-            exit(0)
-
-        (repo, err) = github_api.fetchLabels(namespace, repository)
+        (repo_lables, err) = github_api.fetchLabels(_namespace, _repo)
         if err is not None:
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
+        diffs.append(label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias))
 
-        _report(args.format, [diff])
+    _report(args.format, diffs)
 
-    elif args.command == 'sync':
-        truth = loadSource(args.source)
 
-        (namespace, repository) = parseTarget(args.target)
+def command_report_repository(args, namespace, repository, truth):
+    (repo, err) = github_api.fetchLabels(namespace, repository)
+    if err is not None:
+        print(err, file=sys.stderr)
+        exit(1)
 
-        if not args.create and not args.delete and not args.modify:
-            print("At least one of --create, --delete, --modify must be set",
-                  file=sys.stderr)
-            exit(2)
+    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
 
-        if repository is None:
-            (repos, err) = github_api.fetchRepositories(namespace)
-            if err is not None:
-                print(err, file=sys.stderr)
-                exit(1)
+    _report(args.format, [diff])
 
-            for repo in repos:
-                _namespace = repo["owner"]["login"]
-                _repo = repo["name"]
 
-                (repo_lables, err) = github_api.fetchLabels(_namespace, _repo)
-                if err is not None:
-                    print(err, file=sys.stderr)
-                    exit(1)
+def command_sync_namespace(args, namespace, truth):
+    (repos, err) = github_api.fetchRepositories(namespace)
+    if err is not None:
+        print(err, file=sys.stderr)
+        exit(1)
 
-                diff = label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias)
+    for repo in repos:
+        _namespace = repo["owner"]["login"]
+        _repo = repo["name"]
 
-                if args.create:
-                    actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
-
-                if args.delete:
-                    actions.applyAllDelete(diff, args.assumeyes, reports.terminalPrint)
-
-                if args.modify:
-                    actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
-
-            exit(0)
-
-        (repo, err) = github_api.fetchLabels(namespace, repository)
+        (repo_lables, err) = github_api.fetchLabels(_namespace, _repo)
         if err is not None:
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
+        diff = label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias)
 
         if args.create:
             actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
@@ -242,6 +205,57 @@ def main():
 
         if args.modify:
             actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
+
+
+def command_sync_repository(args, namespace, repository, truth):
+    (repo, err) = github_api.fetchLabels(namespace, repository)
+    if err is not None:
+        print(err, file=sys.stderr)
+        exit(1)
+
+    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
+
+    if args.create:
+        actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
+
+    if args.delete:
+        actions.applyAllDelete(diff, args.assumeyes, reports.terminalPrint)
+
+    if args.modify:
+        actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
+
+
+def main():
+    args = parse_arguments()
+
+    if args.token is not None:
+        os.environ["GITHUB_ACCESS_TOKEN"] = args.token
+
+    truth = loadSource(args.source)
+
+    (namespace, repository) = parseTarget(args.target)
+
+    if args.command == 'report':
+
+        if repository is None:
+            command_report_namespace(args, namespace, truth)
+            exit(0)
+
+        command_report_repository(args, namespace, repository, truth)
+        exit(0)
+
+    elif args.command == 'sync':
+        if not args.create and not args.delete and not args.modify:
+            print("At least one of --create, --delete, --modify must be set",
+                  file=sys.stderr)
+            exit(2)
+
+        if repository is None:
+            command_sync_namespace(args, namespace, truth)
+            exit(0)
+
+        command_report_repository(args, namespace, repository, truth)
+        exit(0)
 
 
 if __name__ == '__main__':
