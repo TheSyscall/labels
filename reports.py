@@ -8,13 +8,13 @@ def createJsonReport(diff: LabelDiff):
         'missing': diff.missing,
         'extra': diff.extra,
         'diff': diff.diff,
-    }, indent=4)
+    })
 
 
 def createMakrdownReport(diff: LabelDiff):
-    out = f"# {diff.repository}\n\n"
+    out = f"## Repository: {diff.repository}\n\n"
 
-    out += "## Valid Labels\n\n"
+    out += "### Valid Labels\n\n"
     if len(diff.valid) == 0:
         out += "<!-- no valid labels -->\n"
     else:
@@ -27,7 +27,7 @@ def createMakrdownReport(diff: LabelDiff):
                 out += f": {label['description']}"
             out += "\n"
 
-    out += "\n## Missing Labels (Create)\n\n"
+    out += "\n### Missing Labels (Create)\n\n"
     if len(diff.missing) == 0:
         out += "<!-- no missing labels -->\n"
     else:
@@ -35,7 +35,7 @@ def createMakrdownReport(diff: LabelDiff):
         for label in diff.missing:
             out += f" - {label['name']}: {label['description']}\n"
 
-    out += "\n## Extra Labels (Delete)\n\n"
+    out += "\n### Extra Labels (Delete)\n\n"
     if len(diff.extra) == 0:
         out += "<!-- no extra labels -->\n"
     else:
@@ -43,7 +43,7 @@ def createMakrdownReport(diff: LabelDiff):
         for label in diff.extra:
             out += f" - {label['name']}: {label['description']}\n"
 
-    out += "\n## Different Labels (Modify)\n\n"
+    out += "\n### Different Labels (Modify)\n\n"
     if len(diff.diff) == 0:
         out += "<!-- no different labels -->\n"
     else:
