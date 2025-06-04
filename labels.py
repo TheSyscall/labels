@@ -61,6 +61,12 @@ def parse_arguments():
         help="Path to the label source (file path)")
 
     report_parser.add_argument(
+        "-a",
+        "--alias",
+        action="store_true",
+        help="List aliases as a modification")
+
+    report_parser.add_argument(
         "-f",
         "--format",
         choices=["markdown", "json"],
@@ -104,6 +110,12 @@ def parse_arguments():
         "--modify",
         action="store_true",
         help="Automatically modify existing labels")
+
+    sync_parser.add_argument(
+        "-a",
+        "--alias",
+        action="store_true",
+        help="Automatically rename aliases to the canonical name")
 
     sync_parser.add_argument(
         "-y",
@@ -153,7 +165,7 @@ def main():
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(truth, repo, namespace, repository)
+        diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
 
         _report(args.format, diff)
 
@@ -172,7 +184,7 @@ def main():
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(truth, repo, namespace, repository)
+        diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
 
         if not args.create and not args.delete and not args.modify:
             print("At least one of --create, --delete, --modify must be set",

@@ -20,7 +20,12 @@ def createMakrdownReport(diff: LabelDiff):
     else:
         out += f"Count: {len(diff.valid)}\n\n"
         for label in diff.valid:
-            out += f" - {label['name']}\n"
+            out += f" - {label['name']}"
+            if 'resolved_alias' in label:
+                out += f" ({label['resolved_alias']})"
+            if 'description' in label and label['description'] != '':
+                out += f": {label['description']}"
+            out += "\n"
 
     out += "\n## Missing Labels (Create)\n\n"
     if len(diff.missing) == 0:
@@ -49,6 +54,8 @@ def createMakrdownReport(diff: LabelDiff):
                 out += f"   - Change color from: '{label['actual']['color']}' to '{label['truth']['color']}'\n"
             if 'description' in label['delta']:
                 out += f"   - Change description from: '{label['actual']['description']}' to '{label['truth']['description']}'\n"
+            if 'name' in label['delta']:
+                out += f"   - Rename from: '{label['actual']['name']}' to '{label['truth']['name']}'\n"
 
     return out
 
@@ -65,4 +72,6 @@ def terminalPrint(diff: LabelDiff, action: str, label: dict):
             changes.append(f"change color from '{label['actual']['color']}' to '{label['truth']['color']}'")
         if 'description' in label['delta']:
             changes.append(f"change description from '{label['actual']['description']}' to '{label['truth']['description']}'")
+        if 'name' in label['delta']:
+            changes.append(f"rename from '{label['actual']['name']}' to '{label['truth']['name']}'")
         print(', '.join(changes))
