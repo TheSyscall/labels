@@ -129,7 +129,7 @@ def parse_arguments():
 def _report(format: str, diffs: list[label_diff.LabelDiff]):
     if format == "markdown":
         if len(diffs) > 1:
-            print(f"# Namespace {diffs[0].namespace}\n")
+            print(f"# Namespace: {diffs[0].namespace}\n")
         for diff in diffs:
             print(reports.createMakrdownReport(diff))
     elif format == "json":
