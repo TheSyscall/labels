@@ -1,5 +1,6 @@
 import requests
 import os
+import re
 
 
 def fetchJson(endpoint: str, params={}, body={}, method="GET"):
@@ -9,6 +10,11 @@ def fetchJson(endpoint: str, params={}, body={}, method="GET"):
         return "No API Token Provided", -500
 
     base_url = "https://api.github.com"
+
+    url = base_url + endpoint
+
+    if endpoint.startswith('http'):
+        url = endpoint
 
     headers = {
         'Accept': 'application/vnd.github+json',
@@ -20,21 +26,21 @@ def fetchJson(endpoint: str, params={}, body={}, method="GET"):
 
     match(method):
         case 'GET':
-            response = requests.get(base_url + endpoint,
+            response = requests.get(url,
                                     params=params,
                                     headers=headers)
         case 'POST':
-            response = requests.post(base_url + endpoint,
+            response = requests.post(url,
                                      params=params,
                                      json=body,
                                      headers=headers)
         case 'PATCH':
-            response = requests.patch(base_url + endpoint,
+            response = requests.patch(url,
                                       params=params,
                                       json=body,
                                       headers=headers)
         case 'DELETE':
-            response = requests.delete(base_url + endpoint,
+            response = requests.delete(url,
                                        params=params,
                                        headers=headers)
 
@@ -44,18 +50,42 @@ def fetchJson(endpoint: str, params={}, body={}, method="GET"):
     except:
         pass
 
-    return (result, response.status_code)
+    return (result, response.status_code, response.headers)
 
 
 def fetchPaginatedJson(endpoint: str, params={}, body={}, method="GET"):
-    # TODO: Implement pagination
-    params['page'] = 1
+    content = []
     params['per_page'] = 100
-    return fetchJson(endpoint, params, body, method)
+
+    code = 0
+    while True:
+        (data, code, headers) = fetchJson(endpoint, params, body, method)
+
+        if code >= 200 and code < 300:
+            pass  # Nothing to do
+        elif code == 404:
+            return {}, 'Resource not found'
+        elif code < 0:
+            return {}, data
+        else:
+            return {}, 'Unknown error'
+
+        content += data
+
+        if 'Link' not in headers:
+            break
+        links = parseLinkHeader(headers['Link'])
+
+        if 'next' not in links:
+            break
+
+        endpoint = links['next']
+
+    return content, code
 
 
 def fetchLabels(namespace: str, repository: str):
-    (data, code) = fetchJson(f"/repos/{namespace}/{repository}/labels")
+    (data, code) = fetchPaginatedJson(f"/repos/{namespace}/{repository}/labels")
 
     if code >= 200 and code < 300:
         return data, None
@@ -155,3 +185,16 @@ def fetchRepositories(namespace: str):
         return {}, data
     else:
         return {}, 'Unknown error'
+
+
+def parseLinkHeader(header: str):
+    regex = re.compile(r'<(.*?)>(?:.*?)rel="([A-z\s]*)"')
+
+    links = {}
+    for match in regex.finditer(header):
+        link = match.group(1)
+        rel = match.group(2)
+
+        links[rel] = link
+
+    return links
