@@ -123,20 +123,23 @@ def parse_arguments():
         action="store_true",
         help="Automatically answer yes for all questions")
 
-    sync_parser.add_argument(
-        "-f",
-        "--format",
-        choices=["markdown", "json", "none"],
-        default="none",
-        help="Output format (default: none)")
-
     return parser.parse_args()
 
 
-def _report(format: str, diff: label_diff.LabelDiff):
+def _report(format: str, diffs: list[label_diff.LabelDiff]):
     if format == "markdown":
-        print(reports.createMakrdownReport(diff))
+        if len(diffs) > 1:
+            print(f"# Namespace {diffs[0].namespace}\n")
+        for diff in diffs:
+            print(reports.createMakrdownReport(diff))
     elif format == "json":
+        # FIXME: Super hacky
+        if len(diffs) > 0:
+            data = []
+            for diff in diffs:
+                data.append(json.loads(reports.createJsonReport(diff)))
+            print(json.dumps(data))
+            return
         print(reports.createJsonReport(diff))
     elif format == "none":
         pass  # Nothing to do
@@ -144,52 +147,55 @@ def _report(format: str, diff: label_diff.LabelDiff):
         print(f"Unsupported format '{format}'", file=sys.stderr)
 
 
-def main():
-    args = parse_arguments()
+def command_report_namespace(args, namespace, truth):
+    (repos, err) = github_api.fetchRepositories(namespace)
+    if err is not None:
+        print(err, file=sys.stderr)
+        exit(1)
 
-    if args.token is not None:
-        os.environ["GITHUB_ACCESS_TOKEN"] = args.token
+    diffs = []
 
-    if args.command == 'report':
-        truth = loadSource(args.source)
+    for repo in repos:
+        _namespace = repo["owner"]["login"]
+        _repo = repo["name"]
 
-        (namespace, repository) = parseTarget(args.target)
-
-        if repository is None:
-            print("Generting reports for namespaces isn't supported yet",
-                  file=sys.stderr)
-            exit(1)
-
-        (repo, err) = github_api.fetchLabels(namespace, repository)
+        (repo_lables, err) = github_api.fetchLabels(_namespace, _repo)
         if err is not None:
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
+        diffs.append(label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias))
 
-        _report(args.format, diff)
+    _report(args.format, diffs)
 
-    elif args.command == 'sync':
-        truth = loadSource(args.source)
 
-        (namespace, repository) = parseTarget(args.target)
+def command_report_repository(args, namespace, repository, truth):
+    (repo, err) = github_api.fetchLabels(namespace, repository)
+    if err is not None:
+        print(err, file=sys.stderr)
+        exit(1)
 
-        if repository is None:
-            print("Syncing labels for namespaces isn't supported yet",
-                  file=sys.stderr)
-            exit(1)
+    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
 
-        (repo, err) = github_api.fetchLabels(namespace, repository)
+    _report(args.format, [diff])
+
+
+def command_sync_namespace(args, namespace, truth):
+    (repos, err) = github_api.fetchRepositories(namespace)
+    if err is not None:
+        print(err, file=sys.stderr)
+        exit(1)
+
+    for repo in repos:
+        _namespace = repo["owner"]["login"]
+        _repo = repo["name"]
+
+        (repo_lables, err) = github_api.fetchLabels(_namespace, _repo)
         if err is not None:
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
-
-        if not args.create and not args.delete and not args.modify:
-            print("At least one of --create, --delete, --modify must be set",
-                  file=sys.stderr)
-            exit(2)
+        diff = label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias)
 
         if args.create:
             actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
@@ -200,7 +206,56 @@ def main():
         if args.modify:
             actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
 
-        _report(args.format, diff)
+
+def command_sync_repository(args, namespace, repository, truth):
+    (repo, err) = github_api.fetchLabels(namespace, repository)
+    if err is not None:
+        print(err, file=sys.stderr)
+        exit(1)
+
+    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
+
+    if args.create:
+        actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
+
+    if args.delete:
+        actions.applyAllDelete(diff, args.assumeyes, reports.terminalPrint)
+
+    if args.modify:
+        actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
+
+
+def main():
+    args = parse_arguments()
+
+    if args.token is not None:
+        os.environ["GITHUB_ACCESS_TOKEN"] = args.token
+
+    truth = loadSource(args.source)
+
+    (namespace, repository) = parseTarget(args.target)
+
+    if args.command == 'report':
+
+        if repository is None:
+            command_report_namespace(args, namespace, truth)
+            exit(0)
+
+        command_report_repository(args, namespace, repository, truth)
+        exit(0)
+
+    elif args.command == 'sync':
+        if not args.create and not args.delete and not args.modify:
+            print("At least one of --create, --delete, --modify must be set",
+                  file=sys.stderr)
+            exit(2)
+
+        if repository is None:
+            command_sync_namespace(args, namespace, truth)
+            exit(0)
+
+        command_report_repository(args, namespace, repository, truth)
+        exit(0)
 
 
 if __name__ == '__main__':
