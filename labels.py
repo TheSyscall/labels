@@ -126,6 +126,12 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def filterRepository(repository: dict) -> bool:
+    if repository['archived'] == True:
+        return False
+    return True
+
+
 def _report(format: str, diffs: list[label_diff.LabelDiff]):
     if format == "markdown":
         if len(diffs) > 1:
@@ -156,6 +162,8 @@ def command_report_namespace(args, namespace, truth):
     diffs = []
 
     for repo in repos:
+        if not filterRepository(repo):
+            continue
         _namespace = repo["owner"]["login"]
         _repo = repo["name"]
 
@@ -187,6 +195,8 @@ def command_sync_namespace(args, namespace, truth):
         exit(1)
 
     for repo in repos:
+        if not filterRepository(repo):
+            continue
         _namespace = repo["owner"]["login"]
         _repo = repo["name"]
 
