@@ -67,6 +67,12 @@ def parse_arguments():
         help="List aliases as a modification")
 
     report_parser.add_argument(
+        "-o",
+        "--optional",
+        action="store_true",
+        help="List optional labels as required")
+
+    report_parser.add_argument(
         "-f",
         "--format",
         choices=["markdown", "json"],
@@ -116,6 +122,12 @@ def parse_arguments():
         "--alias",
         action="store_true",
         help="Automatically rename aliases to the canonical name")
+
+    sync_parser.add_argument(
+        "-o",
+        "--optional",
+        action="store_true",
+        help="Automatically modify optional labels")
 
     sync_parser.add_argument(
         "-y",
@@ -172,7 +184,7 @@ def command_report_namespace(args, namespace, truth):
             print(err, file=sys.stderr)
             exit(1)
 
-        diffs.append(label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias))
+        diffs.append(label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias, args.optional))
 
     _report(args.format, diffs)
 
@@ -183,7 +195,7 @@ def command_report_repository(args, namespace, repository, truth):
         print(err, file=sys.stderr)
         exit(1)
 
-    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
+    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias, args.optional)
 
     _report(args.format, [diff])
 
@@ -205,7 +217,7 @@ def command_sync_namespace(args, namespace, truth):
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias)
+        diff = label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias, args.optional)
 
         if args.create:
             actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
@@ -223,7 +235,7 @@ def command_sync_repository(args, namespace, repository, truth):
         print(err, file=sys.stderr)
         exit(1)
 
-    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias)
+    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias, args.optional)
 
     if args.create:
         actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
@@ -251,10 +263,10 @@ def main():
 
         if repository is None:
             command_report_namespace(args, namespace, truth)
-            exit(0)
+            return
 
         command_report_repository(args, namespace, repository, truth)
-        exit(0)
+        return
 
     elif args.command == 'sync':
         if 'GITHUB_ACCESS_TOKEN' not in os.environ:
@@ -268,10 +280,10 @@ def main():
 
         if repository is None:
             command_sync_namespace(args, namespace, truth)
-            exit(0)
+            return
 
-        command_report_repository(args, namespace, repository, truth)
-        exit(0)
+        command_sync_repository(args, namespace, repository, truth)
+        return
 
 
 if __name__ == '__main__':

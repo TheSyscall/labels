@@ -1,5 +1,6 @@
 from label_diff import LabelDiff
 import github_api
+import sys
 
 
 def _confirm():
@@ -26,6 +27,9 @@ def applyAllCreate(diff: LabelDiff, yes: bool = False, report=None):
             label.get('color')
         )
 
+        if err is not None:
+            print(err, file=sys.stderr)
+
 
 def applyAllDelete(diff: LabelDiff, yes: bool = False, report=None):
     for label in diff.extra:
@@ -34,7 +38,10 @@ def applyAllDelete(diff: LabelDiff, yes: bool = False, report=None):
         if not yes:
             if not _confirm():
                 continue
-        github_api.deleteLabel(diff.namespace, diff.repository, label['name'])
+        (response, err) = github_api.deleteLabel(diff.namespace, diff.repository, label['name'])
+
+        if err is not None:
+            print(err, file=sys.stderr)
 
 
 def applyAllModify(diff: LabelDiff, yes: bool = False, report=None):
@@ -44,10 +51,13 @@ def applyAllModify(diff: LabelDiff, yes: bool = False, report=None):
         if not yes:
             if not _confirm():
                 continue
-        github_api.updateLabel(
+        (response, err) = github_api.updateLabel(
             diff.namespace,
             diff.repository,
             label['actual']['name'],
             description=label['truth']['description'] if 'description' in label['delta'] else None,
             color=label['truth']['color'] if 'color' in label['delta'] else None
         )
+
+        if err is not None:
+            print(err, file=sys.stderr)
