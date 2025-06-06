@@ -6,6 +6,8 @@ from label_diff import LabelDiff
 def createJsonReport(diff: LabelDiff):
     return json.dumps(
         {
+            "namespace": diff.namespace,
+            "repository": diff.repository,
             "valid": diff.valid,
             "missing": diff.missing,
             "extra": diff.extra,
