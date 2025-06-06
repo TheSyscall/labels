@@ -14,11 +14,66 @@ def createJsonReport(diff: LabelDiff):
     )
 
 
+def _createMarkdownTableHeader(columns: dict) -> str:
+    out = _createMarkdownTableRow(columns, {key: key for key in columns})
+
+    for column, length in columns.items():
+        out += "|" + "-" * (length + 2)
+
+    out += "|\n"
+
+    return out
+
+
+def _createMarkdownTableRow(columns: dict, row: dict) -> str:
+    out = ""
+
+    for column, length in columns.items():
+        content = str(row[column]) if column in row else ""
+        content = content.rjust(length)
+        out += "| " + content + " "
+
+    out += "|\n"
+
+    return out
+
+
+def _createMarkdownTable(rows: list):
+    columns = {}
+
+    for row in rows:
+        for key, value in row.items():
+            if key not in columns:
+                columns[key] = len(key)
+            value_length = len(str(value))
+
+            if value_length > columns[key]:
+                columns[key] = value_length
+
+    out = _createMarkdownTableHeader(columns)
+    for row in rows:
+        out += _createMarkdownTableRow(columns, row)
+
+    return out
+
+
 def createMarkdownReport(diff: LabelDiff):
     out = f"## Repository: {diff.repository}\n\n"
 
     if len(diff.missing) == 0 and len(diff.extra) == 0 and len(diff.diff) == 0:
         out += "Nothing to change!\n"
+        return out
+
+    out += _createMarkdownTable(
+        [
+            {
+                "Valid": len(diff.valid),
+                "Missing": len(diff.missing),
+                "Delete": len(diff.extra),
+                "Modify": len(diff.diff),
+            },
+        ],
+    )
 
     if len(diff.missing) > 0:
         out += "\n### Missing Labels (Create)\n\n"
