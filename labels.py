@@ -168,7 +168,7 @@ def _report(format: str, diffs: list[label_diff.LabelDiff]):
         if len(diffs) > 1:
             print(f"# Namespace: {diffs[0].namespace}\n")
         for diff in diffs:
-            print(reports.createMakrdownReport(diff))
+            print(reports.createMarkdownReport(diff))
     elif format == "json":
         # FIXME: Super hacky
         if len(diffs) > 0:
