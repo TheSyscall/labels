@@ -35,9 +35,13 @@ def getByAliasReverse(actual_list: dict, true_label: dict):
     return None
 
 
-def createDiff(truth: dict, actual: dict, namespace: str, repository: str, rename_alias: bool = False):
-    # return: valid, missing, extra, diff
-
+def createDiff(
+        truth: dict,
+        actual: dict,
+        namespace: str,
+        repository: str,
+        rename_alias: bool = False,
+        require_optional: bool = False):
     valid = []
     missing = []
     extra = []
@@ -47,7 +51,11 @@ def createDiff(truth: dict, actual: dict, namespace: str, repository: str, renam
         found_label = getByName(actual, true_label['name'])
         if found_label is None:
             found_label = getByAliasReverse(actual, true_label)
+
         if found_label is None:
+            if not require_optional and 'optional' in true_label and true_label['optional']:
+                continue
+
             missing.append(true_label)
             continue
 

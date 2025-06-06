@@ -246,6 +246,8 @@ def main():
     (namespace, repository) = parseTarget(args.target)
 
     if args.command == 'report':
+        if 'GITHUB_ACCESS_TOKEN' not in os.environ:
+            print("Warning: No access token defined. Only publicly visible data is available!", file=sys.stderr)
 
         if repository is None:
             command_report_namespace(args, namespace, truth)
@@ -255,6 +257,10 @@ def main():
         exit(0)
 
     elif args.command == 'sync':
+        if 'GITHUB_ACCESS_TOKEN' not in os.environ:
+            print("Error: No access token defined!", file=sys.stderr)
+            exit(1)
+
         if not args.create and not args.delete and not args.modify:
             print("At least one of --create, --delete, --modify must be set",
                   file=sys.stderr)
