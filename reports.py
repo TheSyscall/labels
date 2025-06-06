@@ -100,7 +100,7 @@ def createMarkdownReport(diff: LabelDiff):
     if len(diff.missing) > 0:
         out += "\n### Missing Labels (Create)\n\n"
         for label in diff.missing:
-            out += f" - {label['name']}"
+            out += f"- {label['name']}"
             if "description" in label and label["description"] != "":
                 out += f": {label['description']}"
             out += "\n"
@@ -108,7 +108,7 @@ def createMarkdownReport(diff: LabelDiff):
     if len(diff.extra) > 0:
         out += "\n### Extra Labels (Delete)\n\n"
         for label in diff.extra:
-            out += f" - {label['name']}"
+            out += f"- {label['name']}"
             if "description" in label and label["description"] != "":
                 out += f": {label['description']}"
             out += "\n"
@@ -116,13 +116,13 @@ def createMarkdownReport(diff: LabelDiff):
     if len(diff.diff) > 0:
         out += "\n### Different Labels (Modify)\n\n"
         for label in diff.diff:
-            out += f" - {label['truth']['name']}\n"
+            out += f"- {label['truth']['name']}\n"
             if "color" in label["delta"]:
-                out += f"   - Change color from '{label['actual']['color']}' to '{label['truth']['color']}'\n"
+                out += f"  - Change color from '{label['actual']['color']}' to '{label['truth']['color']}'\n"
             if "description" in label["delta"]:
-                out += f"   - Change description from '{label['actual']['description']}' to '{label['truth']['description']}'\n"
+                out += f"  - Change description from '{label['actual']['description']}' to '{label['truth']['description']}'\n"
             if "name" in label["delta"]:
-                out += f"   - Rename from '{label['actual']['name']}' to '{label['truth']['name']}'\n"
+                out += f"  - Rename from '{label['actual']['name']}' to '{label['truth']['name']}'\n"
 
     return out
 
