@@ -83,7 +83,7 @@ def parse_arguments():
     report_parser.add_argument(
         "-f",
         "--format",
-        choices=["markdown", "json"],
+        choices=["markdown", "json", "summary"],
         default="markdown",
         help="Output format (default: markdown)",
     )
@@ -165,10 +165,15 @@ def filterRepository(repository: dict) -> bool:
 
 def _report(format: str, diffs: list[label_diff.LabelDiff]):
     if format == "markdown":
-        if len(diffs) > 1:
+        is_single_repo = len(diffs) == 1
+        if not is_single_repo:
             print(f"# Namespace: {diffs[0].namespace}\n")
+            print(reports.createMarkdownTableReport(diffs))
         for diff in diffs:
-            print(reports.createMarkdownReport(diff))
+            if is_single_repo or diff.isChange():
+                print(reports.createMarkdownReport(diff))
+    elif format == "summary":
+        print(reports.createMarkdownTableReport(diffs))
     elif format == "json":
         # FIXME: Super hacky
         if len(diffs) > 0:

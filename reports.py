@@ -57,23 +57,43 @@ def _createMarkdownTable(rows: list):
     return out
 
 
-def createMarkdownReport(diff: LabelDiff):
-    out = f"## Repository: {diff.repository}\n\n"
+def createMarkdownTableReport(diffs: list[LabelDiff]):
+    rows = []
 
-    if len(diff.missing) == 0 and len(diff.extra) == 0 and len(diff.diff) == 0:
-        out += "Nothing to change!\n"
-        return out
+    for diff in diffs:
+        name = 0
+        description = 0
+        color = 0
 
-    out += _createMarkdownTable(
-        [
+        for label in diff.diff:
+            if "name" in label["delta"]:
+                name += 1
+            if "description" in label["delta"]:
+                description += 1
+            if "color" in label["delta"]:
+                color += 1
+
+        rows.append(
             {
+                "Repository": diff.repository,
                 "Valid": len(diff.valid),
                 "Missing": len(diff.missing),
                 "Delete": len(diff.extra),
-                "Modify": len(diff.diff),
+                "Rename": name,
+                "Redescribe": description,
+                "Recolor": color,
             },
-        ],
-    )
+        )
+
+    return _createMarkdownTable(rows)
+
+
+def createMarkdownReport(diff: LabelDiff):
+    out = f"## Repository: {diff.repository}\n"
+
+    if not diff.isChange():
+        out += "\nNothing to change!\n"
+        return out
 
     if len(diff.missing) > 0:
         out += "\n### Missing Labels (Create)\n\n"
