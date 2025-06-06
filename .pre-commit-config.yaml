@@ -1,0 +1,46 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: check-xml
+      - id: check-json
+      - id: check-yaml
+      - id: mixed-line-ending
+        args:
+          - "--fix=no"
+      - id: no-commit-to-branch
+  - repo: https://github.com/jackdewinter/pymarkdown
+    rev: v0.9.27
+    hooks:
+      - id: pymarkdown
+        args:
+          - scan
+          - "**.md"
+        exclude: '^\.github\/ISSUE_TEMPLATE'
+  - repo: https://github.com/asottile/reorder-python-imports
+    rev: v3.14.0
+    hooks:
+      - id: reorder-python-imports
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v3.1.0
+    hooks:
+      - id: add-trailing-comma
+  - repo: https://github.com/asottile/dead
+    rev: v2.1.0
+    hooks:
+      - id: dead
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.1.0
+    hooks:
+      - id: black
+  - repo: https://github.com/thesyscall/no-commit
+    rev: 1.0.0
+    hooks:
+      - id: no-commit
+        exclude: .pre-commit-config.yaml
