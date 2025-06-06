@@ -4,23 +4,19 @@ import re
 
 
 def fetchJson(endpoint: str, params={}, body={}, method="GET"):
-    token = os.getenv('GITHUB_ACCESS_TOKEN')
-
-    if token is None or token == '':
-        return "No API Token Provided", -500
-
     base_url = "https://api.github.com"
-
     url = base_url + endpoint
-
     if endpoint.startswith('http'):
         url = endpoint
 
     headers = {
         'Accept': 'application/vnd.github+json',
-        'Authorization': 'token ' + token,
         'X-GitHub-Api-Version': '2022-11-28',
     }
+
+    token = os.getenv('GITHUB_ACCESS_TOKEN')
+    if token is not None and token != '':
+        headers['Authorization'] = 'token ' + token
 
     response = None
 
@@ -81,24 +77,15 @@ def fetchPaginatedJson(endpoint: str, params={}, body={}, method="GET"):
 
         endpoint = links['next']
 
-    return content, code
+    return content, None
 
 
 def fetchLabels(namespace: str, repository: str):
-    (data, code) = fetchPaginatedJson(f"/repos/{namespace}/{repository}/labels")
-
-    if code >= 200 and code < 300:
-        return data, None
-    elif code == 404:
-        return {}, 'Resource not found'
-    elif code < 0:
-        return {}, data
-    else:
-        return {}, 'Unknown error'
+    return fetchPaginatedJson(f"/repos/{namespace}/{repository}/labels")
 
 
 def deleteLabel(namespace: str, repository: str, label: str):
-    (data, code) = fetchJson(f"/repos/{namespace}/{repository}/labels/{label}",
+    (data, code, _) = fetchJson(f"/repos/{namespace}/{repository}/labels/{label}",
                              method="DELETE")
 
     if code >= 200 and code < 300:
@@ -151,7 +138,7 @@ def updateLabel(
     if color is not None:
         body['color'] = color
 
-    (data, code) = fetchJson(
+    (data, code, _) = fetchJson(
         f"/repos/{namespace}/{repository}/labels/{old_name}",
         body=body,
         method="PATCH")
@@ -170,21 +157,14 @@ def updateLabel(
 
 def fetchRepositories(namespace: str):
     if namespace == '-':
-        (data, code) = fetchPaginatedJson("/user/repos")
+        (data, err) = fetchPaginatedJson("/user/repos")
     else:
-        (data, code) = fetchPaginatedJson(f"/orgs/{namespace}/repos")
+        (data, err) = fetchPaginatedJson(f"/orgs/{namespace}/repos")
         if code == 404:
             # FIXME: This only returns public repositories
-            (data, code) = fetchPaginatedJson(f"/users/{namespace}/repos")
+            (data, err) = fetchPaginatedJson(f"/users/{namespace}/repos")
 
-    if code >= 200 and code < 300:
-        return data, None
-    elif code == 404:
-        return {}, 'Resource not found'
-    elif code < 0:
-        return {}, data
-    else:
-        return {}, 'Unknown error'
+    return data, err
 
 
 def parseLinkHeader(header: str):
