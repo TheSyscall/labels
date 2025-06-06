@@ -116,38 +116,82 @@ def parse_arguments():
         "-c",
         "--create",
         action="store_true",
-        help="Automatically create labels",
+        help="Create labels",
     )
 
     sync_parser.add_argument(
         "-d",
         "--delete",
         action="store_true",
-        help="Automatically delete labels",
+        help="Delete labels",
     )
 
     sync_parser.add_argument(
         "-m",
         "--modify",
         action="store_true",
-        help="Automatically modify existing labels",
+        help="Modify existing labels",
     )
 
     sync_parser.add_argument(
         "-a",
         "--alias",
         action="store_true",
-        help="Automatically rename aliases to the canonical name",
+        help="Rename aliases to the canonical name",
     )
 
     sync_parser.add_argument(
         "-o",
         "--optional",
         action="store_true",
-        help="Automatically modify optional labels",
+        help="Modify optional labels",
     )
 
     sync_parser.add_argument(
+        "-y",
+        "--assumeyes",
+        action="store_true",
+        help="Automatically answer yes for all questions",
+    )
+
+    apply_parser = subparsers.add_parser(
+        "apply",
+        help="Apply a report stored as a json file",
+    )
+
+    apply_parser.add_argument(
+        "source",
+        help="The report json file",
+    )
+
+    apply_parser.add_argument(
+        "-T",
+        "--token",
+        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)",
+    )
+
+    apply_parser.add_argument(
+        "-c",
+        "--create",
+        action="store_true",
+        help="Create labels",
+    )
+
+    apply_parser.add_argument(
+        "-d",
+        "--delete",
+        action="store_true",
+        help="Delete labels",
+    )
+
+    apply_parser.add_argument(
+        "-m",
+        "--modify",
+        action="store_true",
+        help="Modify existing labels",
+    )
+
+    apply_parser.add_argument(
         "-y",
         "--assumeyes",
         action="store_true",
@@ -240,6 +284,17 @@ def command_report_repository(args, namespace, repository, truth):
     _report(args.format, [diff])
 
 
+def _apply(args, diff: label_diff.LabelDiff):
+    if args.create:
+        actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
+
+    if args.delete:
+        actions.applyAllDelete(diff, args.assumeyes, reports.terminalPrint)
+
+    if args.modify:
+        actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
+
+
 def command_sync_namespace(args, namespace, truth):
     (repos, err) = github_api.fetchRepositories(namespace)
     if err is not None:
@@ -266,14 +321,7 @@ def command_sync_namespace(args, namespace, truth):
             args.optional,
         )
 
-        if args.create:
-            actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
-
-        if args.delete:
-            actions.applyAllDelete(diff, args.assumeyes, reports.terminalPrint)
-
-        if args.modify:
-            actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
+        _apply(args, diff)
 
 
 def command_sync_repository(args, namespace, repository, truth):
@@ -291,14 +339,36 @@ def command_sync_repository(args, namespace, repository, truth):
         args.optional,
     )
 
-    if args.create:
-        actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
+    _apply(args, diff)
 
-    if args.delete:
-        actions.applyAllDelete(diff, args.assumeyes, reports.terminalPrint)
 
-    if args.modify:
-        actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
+def command_apply(args):
+    with open(args.source, "r") as file:
+        data = json.load(file)
+
+    for jdiff in data:
+        diff = label_diff.LabelDiff.fromDict(jdiff)
+        _apply(args, diff)
+
+
+def checkAccessToken(required: bool):
+    if "GITHUB_ACCESS_TOKEN" not in os.environ:
+        if required:
+            print("Error: No access token defined!", file=sys.stderr)
+            exit(1)
+        print(
+            "Warning: No access token defined. Only publicly visible data is available!",
+            file=sys.stderr,
+        )
+
+
+def checkActionParamSet(args):
+    if not args.create and not args.delete and not args.modify:
+        print(
+            "At least one of --create, --delete, --modify must be set",
+            file=sys.stderr,
+        )
+        exit(2)
 
 
 def main():
@@ -307,16 +377,19 @@ def main():
     if args.token is not None:
         os.environ["GITHUB_ACCESS_TOKEN"] = args.token
 
+    if args.command == "apply":
+        checkAccessToken(True)
+        checkActionParamSet(args)
+
+        command_apply(args)
+        return
+
     truth = loadSource(args.source)
 
     (namespace, repository) = parseTarget(args.target)
 
     if args.command == "report":
-        if "GITHUB_ACCESS_TOKEN" not in os.environ:
-            print(
-                "Warning: No access token defined. Only publicly visible data is available!",
-                file=sys.stderr,
-            )
+        checkAccessToken(False)
 
         if repository is None:
             command_report_namespace(args, namespace, truth)
@@ -326,16 +399,8 @@ def main():
         return
 
     elif args.command == "sync":
-        if "GITHUB_ACCESS_TOKEN" not in os.environ:
-            print("Error: No access token defined!", file=sys.stderr)
-            exit(1)
-
-        if not args.create and not args.delete and not args.modify:
-            print(
-                "At least one of --create, --delete, --modify must be set",
-                file=sys.stderr,
-            )
-            exit(2)
+        checkAccessToken(True)
+        checkActionParamSet(args)
 
         if repository is None:
             command_sync_namespace(args, namespace, truth)
