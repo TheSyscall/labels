@@ -69,9 +69,9 @@ def terminalPrint(diff: LabelDiff, action: str, label: dict):
     elif action == 'modify':
         changes = []
         if 'color' in label['delta']:
-            changes.append(f"change color from '{label['actual']['color']}' to '{label['truth']['color']}'")
+            changes.append(f"change color of '{label['actual']['name']}' from '{label['actual']['color']}' to '{label['truth']['color']}'")
         if 'description' in label['delta']:
-            changes.append(f"change description from '{label['actual']['description']}' to '{label['truth']['description']}'")
+            changes.append(f"change description of '{label['actual']['name']}' from '{label['actual']['description']}' to '{label['truth']['description']}'")
         if 'name' in label['delta']:
             changes.append(f"rename from '{label['actual']['name']}' to '{label['truth']['name']}'")
         print(', '.join(changes))
