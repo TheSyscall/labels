@@ -165,8 +165,7 @@ def fetchRepositories(namespace: str):
         (data, err) = fetchPaginatedJson("/user/repos")
     else:
         (data, err) = fetchPaginatedJson(f"/orgs/{namespace}/repos")
-        if code == 404:
-            # FIXME: This only returns public repositories
+        if err is not None:
             (data, err) = fetchPaginatedJson(f"/users/{namespace}/repos")
 
     return data, err
