@@ -198,6 +198,24 @@ def parse_arguments():
         help="Automatically answer yes for all questions",
     )
 
+    reformat_parser = subparsers.add_parser(
+        "reformat",
+        help="Convert a json report into any of the other formats",
+    )
+
+    reformat_parser.add_argument(
+        "source",
+        help="The report json file",
+    )
+
+    reformat_parser.add_argument(
+        "-f",
+        "--format",
+        choices=["markdown", "summary"],
+        default="markdown",
+        help="Output format (default: markdown)",
+    )
+
     return parser.parse_args()
 
 
@@ -284,6 +302,11 @@ def command_report_repository(args, namespace, repository, truth):
     _report(args.format, [diff])
 
 
+def command_reformat(args):
+    diffs = loadJsonReport(args.source)
+    _report(args.format, diffs)
+
+
 def _apply(args, diff: label_diff.LabelDiff):
     if args.create:
         actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
@@ -342,12 +365,20 @@ def command_sync_repository(args, namespace, repository, truth):
     _apply(args, diff)
 
 
-def command_apply(args):
-    with open(args.source, "r") as file:
+def loadJsonReport(path: str):
+    diffs = []
+    with open(path, "r") as file:
         data = json.load(file)
 
     for jdiff in data:
         diff = label_diff.LabelDiff.fromDict(jdiff)
+        diffs.append(diff)
+
+    return diffs
+
+
+def command_apply(args):
+    for diff in loadJsonReport(args.source):
         _apply(args, diff)
 
 
@@ -373,6 +404,10 @@ def checkActionParamSet(args):
 
 def main():
     args = parse_arguments()
+
+    if args.command == "reformat":
+        command_reformat(args)
+        return
 
     if args.token is not None:
         os.environ["GITHUB_ACCESS_TOKEN"] = args.token
