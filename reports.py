@@ -14,7 +14,7 @@ def createJsonReport(diff: LabelDiff):
     )
 
 
-def createMakrdownReport(diff: LabelDiff):
+def createMarkdownReport(diff: LabelDiff):
     out = f"## Repository: {diff.repository}\n\n"
 
     if len(diff.missing) == 0 and len(diff.extra) == 0 and len(diff.diff) == 0:
