@@ -17,40 +17,21 @@ def createJsonReport(diff: LabelDiff):
 def createMakrdownReport(diff: LabelDiff):
     out = f"## Repository: {diff.repository}\n\n"
 
-    out += "### Valid Labels\n\n"
-    if len(diff.valid) == 0:
-        out += "<!-- no valid labels -->\n"
-    else:
-        out += f"Count: {len(diff.valid)}\n\n"
-        for label in diff.valid:
-            out += f" - {label['name']}"
-            if "resolved_alias" in label:
-                out += f" ({label['resolved_alias']})"
-            if "description" in label and label["description"] != "":
-                out += f": {label['description']}"
-            out += "\n"
+    if len(diff.missing) == 0 and len(diff.extra) == 0 and len(diff.diff) == 0:
+        out += "Nothing to change!\n"
 
-    out += "\n### Missing Labels (Create)\n\n"
-    if len(diff.missing) == 0:
-        out += "<!-- no missing labels -->\n"
-    else:
-        out += f"Count: {len(diff.missing)}\n\n"
+    if len(diff.missing) > 0:
+        out += "\n### Missing Labels (Create)\n\n"
         for label in diff.missing:
             out += f" - {label['name']}: {label['description']}\n"
 
-    out += "\n### Extra Labels (Delete)\n\n"
-    if len(diff.extra) == 0:
-        out += "<!-- no extra labels -->\n"
-    else:
-        out += f"Count: {len(diff.extra)}\n\n"
+    if len(diff.extra) > 0:
+        out += "\n### Extra Labels (Delete)\n\n"
         for label in diff.extra:
             out += f" - {label['name']}: {label['description']}\n"
 
-    out += "\n### Different Labels (Modify)\n\n"
-    if len(diff.diff) == 0:
-        out += "<!-- no different labels -->\n"
-    else:
-        out += f"Count: {len(diff.diff)}\n\n"
+    if len(diff.diff) > 0:
+        out += "\n### Different Labels (Modify)\n\n"
         for label in diff.diff:
             out += f" - {label['truth']['name']}\n"
             if "color" in label["delta"]:
