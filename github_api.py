@@ -117,11 +117,16 @@ def createLabel(
         name: str,
         description: str = None,
         color: str = None):
-    (data, code) = fetchJson(f"/repos/{namespace}/{repository}/labels", body={
+    body = {
         'name': name,
-        'description': description,
-        'color': color
-    }, method='POST')
+    }
+
+    if description is not None:
+        body['description'] = description
+    if color is not None:
+        body['color'] = color
+
+    (data, code, _) = fetchJson(f"/repos/{namespace}/{repository}/labels", body=body, method='POST')
 
     if code >= 200 and code < 300:
         return True, None

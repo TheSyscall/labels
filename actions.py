@@ -18,12 +18,12 @@ def applyAllCreate(diff: LabelDiff, yes: bool = False, report=None):
         if not yes:
             if not _confirm():
                 continue
-        github_api.createLabel(
+        (response, err) = github_api.createLabel(
             diff.namespace,
             diff.repository,
             label['name'],
-            label['description'],
-            label['color']
+            label.get('description'),
+            label.get('color')
         )
 
 
