@@ -1,19 +1,20 @@
+import argparse
+import json
 import os
 import sys
-import json
-import github_api
+
 import actions
-import reports
+import github_api
 import label_diff
-import argparse
+import reports
 
 
 def readFromFile(path: str):
     data = None
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         data = json.load(f)
 
-    labels = data['labels']
+    labels = data["labels"]
 
     return labels
 
@@ -23,7 +24,7 @@ def loadSource(source: str):
 
 
 def parseTarget(target: str):
-    parts = target.split('/')
+    parts = target.split("/")
 
     if len(parts) == 2:
         return (parts[0], parts[1])
@@ -36,110 +37,128 @@ def parseTarget(target: str):
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Manage labels for a GitHub repository.")
+        description="Manage labels for a GitHub repository.",
+    )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     report_parser = subparsers.add_parser(
         "report",
-        help="Report the current state of the labels")
+        help="Report the current state of the labels",
+    )
 
     report_parser.add_argument(
         "-T",
         "--token",
-        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)")
+        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)",
+    )
 
     report_parser.add_argument(
         "target",
         metavar="namespace/repo",
-        help="GitHub target in the format namespace/repo or namespace")
+        help="GitHub target in the format namespace/repo or namespace",
+    )
 
     report_parser.add_argument(
         "-s",
         "--source",
         required=True,
-        help="Path to the label source (file path)")
+        help="Path to the label source (file path)",
+    )
 
     report_parser.add_argument(
         "-a",
         "--alias",
         action="store_true",
-        help="List aliases as a modification")
+        help="List aliases as a modification",
+    )
 
     report_parser.add_argument(
         "-o",
         "--optional",
         action="store_true",
-        help="List optional labels as required")
+        help="List optional labels as required",
+    )
 
     report_parser.add_argument(
         "-f",
         "--format",
         choices=["markdown", "json"],
         default="markdown",
-        help="Output format (default: markdown)")
+        help="Output format (default: markdown)",
+    )
 
     sync_parser = subparsers.add_parser(
         "sync",
-        help="Sync labels with a target")
+        help="Sync labels with a target",
+    )
 
     sync_parser.add_argument(
         "-T",
         "--token",
-        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)")
+        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)",
+    )
 
     sync_parser.add_argument(
         "target",
         metavar="namespace/repo",
-        help="GitHub target in the format namespace/repo or namespace")
+        help="GitHub target in the format namespace/repo or namespace",
+    )
 
     sync_parser.add_argument(
         "-s",
         "--source",
         required=True,
-        help="Path to the label source (file path)")
+        help="Path to the label source (file path)",
+    )
 
     sync_parser.add_argument(
         "-c",
         "--create",
         action="store_true",
-        help="Automatically create labels")
+        help="Automatically create labels",
+    )
 
     sync_parser.add_argument(
         "-d",
         "--delete",
         action="store_true",
-        help="Automatically delete labels")
+        help="Automatically delete labels",
+    )
 
     sync_parser.add_argument(
         "-m",
         "--modify",
         action="store_true",
-        help="Automatically modify existing labels")
+        help="Automatically modify existing labels",
+    )
 
     sync_parser.add_argument(
         "-a",
         "--alias",
         action="store_true",
-        help="Automatically rename aliases to the canonical name")
+        help="Automatically rename aliases to the canonical name",
+    )
 
     sync_parser.add_argument(
         "-o",
         "--optional",
         action="store_true",
-        help="Automatically modify optional labels")
+        help="Automatically modify optional labels",
+    )
 
     sync_parser.add_argument(
         "-y",
         "--assumeyes",
         action="store_true",
-        help="Automatically answer yes for all questions")
+        help="Automatically answer yes for all questions",
+    )
 
     return parser.parse_args()
 
 
 def filterRepository(repository: dict) -> bool:
-    if repository['archived'] == True:
+    if repository["archived"] == True:
         return False
     return True
 
@@ -184,7 +203,16 @@ def command_report_namespace(args, namespace, truth):
             print(err, file=sys.stderr)
             exit(1)
 
-        diffs.append(label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias, args.optional))
+        diffs.append(
+            label_diff.createDiff(
+                truth,
+                repo_lables,
+                _namespace,
+                _repo,
+                args.alias,
+                args.optional,
+            ),
+        )
 
     _report(args.format, diffs)
 
@@ -195,7 +223,14 @@ def command_report_repository(args, namespace, repository, truth):
         print(err, file=sys.stderr)
         exit(1)
 
-    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias, args.optional)
+    diff = label_diff.createDiff(
+        truth,
+        repo,
+        namespace,
+        repository,
+        args.alias,
+        args.optional,
+    )
 
     _report(args.format, [diff])
 
@@ -217,7 +252,14 @@ def command_sync_namespace(args, namespace, truth):
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(truth, repo_lables, _namespace, _repo, args.alias, args.optional)
+        diff = label_diff.createDiff(
+            truth,
+            repo_lables,
+            _namespace,
+            _repo,
+            args.alias,
+            args.optional,
+        )
 
         if args.create:
             actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
@@ -235,7 +277,14 @@ def command_sync_repository(args, namespace, repository, truth):
         print(err, file=sys.stderr)
         exit(1)
 
-    diff = label_diff.createDiff(truth, repo, namespace, repository, args.alias, args.optional)
+    diff = label_diff.createDiff(
+        truth,
+        repo,
+        namespace,
+        repository,
+        args.alias,
+        args.optional,
+    )
 
     if args.create:
         actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
@@ -257,9 +306,12 @@ def main():
 
     (namespace, repository) = parseTarget(args.target)
 
-    if args.command == 'report':
-        if 'GITHUB_ACCESS_TOKEN' not in os.environ:
-            print("Warning: No access token defined. Only publicly visible data is available!", file=sys.stderr)
+    if args.command == "report":
+        if "GITHUB_ACCESS_TOKEN" not in os.environ:
+            print(
+                "Warning: No access token defined. Only publicly visible data is available!",
+                file=sys.stderr,
+            )
 
         if repository is None:
             command_report_namespace(args, namespace, truth)
@@ -268,14 +320,16 @@ def main():
         command_report_repository(args, namespace, repository, truth)
         return
 
-    elif args.command == 'sync':
-        if 'GITHUB_ACCESS_TOKEN' not in os.environ:
+    elif args.command == "sync":
+        if "GITHUB_ACCESS_TOKEN" not in os.environ:
             print("Error: No access token defined!", file=sys.stderr)
             exit(1)
 
         if not args.create and not args.delete and not args.modify:
-            print("At least one of --create, --delete, --modify must be set",
-                  file=sys.stderr)
+            print(
+                "At least one of --create, --delete, --modify must be set",
+                file=sys.stderr,
+            )
             exit(2)
 
         if repository is None:
@@ -286,5 +340,5 @@ def main():
         return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
