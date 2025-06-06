@@ -10,6 +10,17 @@ class LabelDiff:
     def isChange(self):
         return len(self.missing) > 0 or len(self.extra) > 0 or len(self.diff) > 0
 
+    @classmethod
+    def fromDict(cls, dict: dict):
+        return cls(
+            dict["namespace"],
+            dict["repository"],
+            dict["valid"],
+            dict["missing"],
+            dict["extra"],
+            dict["diff"],
+        )
+
 
 def getByName(list: dict, name: str):
     for label in list:
