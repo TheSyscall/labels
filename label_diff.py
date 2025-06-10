@@ -1,19 +1,33 @@
-class LabelDiff:
-    def __init__(self, namespace, repository, valid, missing, extra, diff):
-        self.namespace = namespace
-        self.repository = repository
-        self.valid = valid
-        self.missing = missing
-        self.extra = extra
-        self.diff = diff
+from __future__ import annotations
 
-    def is_change(self):
+from typing import Any
+from typing import Optional
+
+
+class LabelDiff:
+    def __init__(
+        self,
+        namespace: str,
+        repository: str,
+        valid: list[dict[str, Any]],
+        missing: list[dict[str, Any]],
+        extra: list[dict[str, Any]],
+        diff: list[dict[str, Any]],
+    ):
+        self.namespace: str = namespace
+        self.repository: str = repository
+        self.valid: list[dict[str, Any]] = valid
+        self.missing: list[dict[str, Any]] = missing
+        self.extra: list[dict[str, Any]] = extra
+        self.diff: list[dict[str, Any]] = diff
+
+    def is_change(self) -> bool:
         return (
             len(self.missing) > 0 or len(self.extra) > 0 or len(self.diff) > 0
         )
 
     @classmethod
-    def from_dict(cls, dict: dict):
+    def from_dict(cls, dict: dict[str, Any]) -> LabelDiff:
         return cls(
             dict["namespace"],
             dict["repository"],
@@ -24,14 +38,20 @@ class LabelDiff:
         )
 
 
-def get_by_name(list: dict, name: str):
+def get_by_name(
+    list: list[dict[str, Any]],
+    name: str,
+) -> Optional[dict[str, Any]]:
     for label in list:
         if label["name"] == name:
             return label
     return None
 
 
-def get_by_alias(true_list: dict, actual_label: dict):
+def get_by_alias(
+    true_list: list[dict[str, Any]],
+    actual_label: dict[str, Any],
+) -> Optional[dict[str, Any]]:
     for true_label in true_list:
         if "alias" not in true_label:
             continue
@@ -40,7 +60,10 @@ def get_by_alias(true_list: dict, actual_label: dict):
     return None
 
 
-def get_by_alias_reverse(actual_list: dict, true_label: dict):
+def get_by_alias_reverse(
+    actual_list: list[dict[str, Any]],
+    true_label: dict[str, Any],
+) -> Optional[dict[str, Any]]:
     if "alias" not in true_label:
         return None
     for alias in true_label["alias"]:
@@ -51,13 +74,13 @@ def get_by_alias_reverse(actual_list: dict, true_label: dict):
 
 
 def create_diff(
-    truth: dict,
-    actual: dict,
+    truth: list[dict[str, Any]],
+    actual: list[dict[str, Any]],
     namespace: str,
     repository: str,
     rename_alias: bool = False,
     require_optional: bool = False,
-):
+) -> LabelDiff:
     valid = []
     missing = []
     extra = []
