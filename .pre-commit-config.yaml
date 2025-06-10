@@ -39,6 +39,15 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
+        args: [--line-length=79]
+  - repo: https://github.com/hhatto/autopep8
+    rev: v2.3.2
+    hooks:
+      - id: autopep8
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
   - repo: https://github.com/thesyscall/no-commit
     rev: 1.0.0
     hooks:
