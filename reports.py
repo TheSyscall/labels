@@ -1,7 +1,12 @@
 import json
 from typing import Any
+from typing import Union
 
+from label_diff import Label
+from label_diff import LabelDelta
+from label_diff import LabelDeltaType
 from label_diff import LabelDiff
+from label_diff import LabelSpec
 
 
 def create_json_report(diff: LabelDiff) -> str:
@@ -72,11 +77,11 @@ def create_markdown_table_report(diffs: list[LabelDiff]) -> str:
         color = 0
 
         for label in diff.diff:
-            if "name" in label["delta"]:
+            if LabelDeltaType.NAME in label.delta:
                 name += 1
-            if "description" in label["delta"]:
+            if LabelDeltaType.DESCRIPTION in label.delta:
                 description += 1
-            if "color" in label["delta"]:
+            if LabelDeltaType.COLOR in label.delta:
                 color += 1
 
         rows.append(
@@ -103,39 +108,45 @@ def create_markdown_report(diff: LabelDiff) -> str:
 
     if len(diff.missing) > 0:
         out += "\n### Missing Labels (Create)\n\n"
-        for label in diff.missing:
-            out += f"- {label['name']}"
-            if "description" in label and label["description"] != "":
-                out += f": {label['description']}"
+        for missing_label in diff.missing:
+            out += f"- {missing_label.name}"
+            if (
+                missing_label.description is not None
+                and missing_label.description != ""
+            ):
+                out += f": {missing_label.description}"
             out += "\n"
 
     if len(diff.extra) > 0:
         out += "\n### Extra Labels (Delete)\n\n"
-        for label in diff.extra:
-            out += f"- {label['name']}"
-            if "description" in label and label["description"] != "":
-                out += f": {label['description']}"
+        for extra_label in diff.extra:
+            out += f"- {extra_label.name}"
+            if (
+                extra_label.description is not None
+                and extra_label.description != ""
+            ):
+                out += f": {extra_label.description}"
             out += "\n"
 
     if len(diff.diff) > 0:
         out += "\n### Different Labels (Modify)\n\n"
         for label in diff.diff:
-            out += f"- {label['truth']['name']}\n"
-            if "color" in label["delta"]:
+            out += f"- {label.spec.name}\n"
+            if LabelDeltaType.COLOR in label.delta:
                 out += (
-                    f"  - Change color from '{label['actual']['color']}' "
-                    f"to '{label['truth']['color']}'\n"
+                    f"  - Change color from '{label.actual.color}' "
+                    f"to '{label.spec.color}'\n"
                 )
-            if "description" in label["delta"]:
+            if LabelDeltaType.DESCRIPTION in label.delta:
                 out += (
                     "  - Change description from "
-                    f"'{label['actual']['description']}' to "
-                    f"'{label['truth']['description']}'\n"
+                    f"'{label.actual.description}' to "
+                    f"'{label.spec.description}'\n"
                 )
-            if "name" in label["delta"]:
+            if LabelDeltaType.NAME in label.delta:
                 out += (
-                    f"  - Rename from '{label['actual']['name']}' to "
-                    f"'{label['truth']['name']}'\n"
+                    f"  - Rename from '{label.actual.name}' to "
+                    f"'{label.spec.name}'\n"
                 )
 
     return out
@@ -144,29 +155,32 @@ def create_markdown_report(diff: LabelDiff) -> str:
 def terminal_print(
     diff: LabelDiff,
     action: str,
-    label: dict[str, Any],
+    label: Union[Label, LabelSpec, LabelDelta],
 ) -> None:
     print(f"{diff.namespace}/{diff.repository}: ", end="")
     if action == "delete":
-        print(f"delete '{label['name']}'")
+        assert isinstance(label, Label)
+        print(f"delete '{label.name}'")
     elif action == "create":
-        print(f"create '{label['name']}' ({label['description']})")
+        assert isinstance(label, Label)
+        print(f"create '{label.name}' ({label.description})")
     elif action == "modify":
+        assert isinstance(label, LabelDelta)
         changes = []
-        name = label["actual"]["name"]
-        if "color" in label["delta"]:
+        name = label.actual.name
+        if LabelDeltaType.COLOR in label.delta:
             changes.append(
-                f"change color of '{name}' from '{label['actual']['color']}' "
-                f"to '{label['truth']['color']}'",
+                f"change color of '{name}' from '{label.actual.color}' "
+                f"to '{label.spec.color}'",
             )
-        if "description" in label["delta"]:
+        if LabelDeltaType.DESCRIPTION in label.delta:
             changes.append(
                 f"change description of '{name}' from "
-                f"'{label['actual']['description']}' to "
-                f"'{label['truth']['description']}'",
+                f"'{label.actual.description}' to "
+                f"'{label.spec.description}'",
             )
-        if "name" in label["delta"]:
+        if LabelDeltaType.NAME in label.delta:
             changes.append(
-                f"rename from '{name}' to '{label['truth']['name']}'",
+                f"rename from '{name}' to '{label.spec.name}'",
             )
         print(", ".join(changes))

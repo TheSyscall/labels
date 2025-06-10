@@ -9,6 +9,8 @@ from typing import Union
 
 import requests
 
+from label_diff import Label
+
 
 def fetch_json(
     endpoint: str,
@@ -107,8 +109,19 @@ def fetch_paginated_json(
 def fetch_labels(
     namespace: str,
     repository: str,
-) -> Tuple[list[dict[str, Any]], Optional[str]]:
-    return fetch_paginated_json(f"/repos/{namespace}/{repository}/labels")
+) -> Tuple[list[Label], Optional[str]]:
+    (data, err) = fetch_paginated_json(
+        f"/repos/{namespace}/{repository}/labels",
+    )
+
+    if err:
+        return [], err
+
+    result = []
+    for jdata in data:
+        result.append(Label.from_dict(jdata))
+
+    return result, None
 
 
 def delete_label(

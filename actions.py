@@ -1,9 +1,11 @@
 import sys
-from typing import Any
 from typing import Callable
 from typing import Optional
+from typing import Union
 
 import github_api
+from label_diff import Label
+from label_diff import LabelDelta
 from label_diff import LabelDiff
 
 
@@ -16,7 +18,7 @@ def _confirm() -> bool:
             return True
 
 
-report_function = Callable[[LabelDiff, str, dict[str, Any]], None]
+report_function = Callable[[LabelDiff, str, Union[Label, LabelDelta]], None]
 
 
 def apply_create(
@@ -33,9 +35,9 @@ def apply_create(
         (response, err) = github_api.create_label(
             diff.namespace,
             diff.repository,
-            label["name"],
-            label.get("description"),
-            label.get("color"),
+            label.name,
+            label.description,
+            label.color,
         )
 
         if err is not None:
@@ -56,7 +58,7 @@ def apply_delete(
         (response, err) = github_api.delete_label(
             diff.namespace,
             diff.repository,
-            label["name"],
+            label.name,
         )
 
         if err is not None:
@@ -75,17 +77,13 @@ def apply_modify(
             if not _confirm():
                 continue
 
-        color = label["truth"]["color"] if "color" in label["delta"] else None
-        description = (
-            label["truth"]["description"]
-            if "description" in label["delta"]
-            else None
-        )
+        color = label.spec.color
+        description = label.spec.description
 
         (response, err) = github_api.update_label(
             diff.namespace,
             diff.repository,
-            label["actual"]["name"],
+            label.actual.name,
             description=description,
             color=color,
         )
