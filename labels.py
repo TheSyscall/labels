@@ -19,7 +19,10 @@ def validate_json_schema(data: dict) -> bool:
         with open(dirname + "/labels-schema.json") as f:
             schema = json.load(f)
     except json.JSONDecodeError as e:
-        print(f"Error while decoding schema file '{path}' in line {e.lineno}: {e.msg}")
+        print(
+            f"Error while decoding schema file '{path}' "
+            f"in line {e.lineno}: {e.msg}",
+        )
         exit(1)
     except Exception as e:
         print(f"Error while schema file '{path}': ", file=sys.stderr, end="")
@@ -36,7 +39,10 @@ def validate_json_schema(data: dict) -> bool:
     try:
         jsonschema.validate(instance=data, schema=schema)
     except jsonschema.exceptions.ValidationError as e:
-        print(f"Error while verifying labels schema: {e.message}", file=sys.stderr)
+        print(
+            f"Error while verifying labels schema: {e.message}",
+            file=sys.stderr,
+        )
         exit(1)
 
     return True
