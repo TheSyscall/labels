@@ -3,10 +3,43 @@ import json
 import os
 import sys
 
+import jsonschema
+
 import actions
 import github_api
 import label_diff
 import reports
+
+
+def validate_json_schema(data: dict) -> bool:
+    dirname = os.path.dirname(os.path.abspath(__file__))
+    path = dirname + "/labels-schama.json"
+    schema = None
+    try:
+        with open(dirname + "/labels-schema.json") as f:
+            schema = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"Error while decoding schema file '{path}' in line {e.lineno}: {e.msg}")
+        exit(1)
+    except Exception as e:
+        print(f"Error while schema file '{path}': ", file=sys.stderr, end="")
+        if hasattr(e, "message"):
+            print(e.message, file=sys.stderr)
+        else:
+            print(e, file=sys.stderr)
+        exit(1)
+
+    if schema is None:
+        print("Empty schema!", file=sys.stderr)
+        exit(1)
+
+    try:
+        jsonschema.validate(instance=data, schema=schema)
+    except jsonschema.exceptions.ValidationError as e:
+        print(f"Error while verifying labels schema: {e.message}", file=sys.stderr)
+        exit(1)
+
+    return True
 
 
 def read_labels_from_json_file(path: str):
@@ -22,6 +55,8 @@ def read_labels_from_json_file(path: str):
         data = None
         with open(path, "r") as f:
             data = json.load(f)
+
+        validate_json_schema(data)
 
         labels = data["labels"]
 
