@@ -56,16 +56,20 @@ def applyAllModify(diff: LabelDiff, yes: bool = False, report=None):
         if not yes:
             if not _confirm():
                 continue
+
+        color = label["truth"]["color"] if "color" in label["delta"] else None
+        description = (
+            label["truth"]["description"]
+            if "description" in label["delta"]
+            else None
+        )
+
         (response, err) = github_api.updateLabel(
             diff.namespace,
             diff.repository,
             label["actual"]["name"],
-            description=(
-                label["truth"]["description"]
-                if "description" in label["delta"]
-                else None
-            ),
-            color=label["truth"]["color"] if "color" in label["delta"] else None,
+            description=description,
+            color=color,
         )
 
         if err is not None:

@@ -8,7 +8,9 @@ class LabelDiff:
         self.diff = diff
 
     def isChange(self):
-        return len(self.missing) > 0 or len(self.extra) > 0 or len(self.diff) > 0
+        return (
+            len(self.missing) > 0 or len(self.extra) > 0 or len(self.diff) > 0
+        )
 
     @classmethod
     def fromDict(cls, dict: dict):

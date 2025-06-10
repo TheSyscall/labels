@@ -27,7 +27,10 @@ def readFromFile(path: str):
 
         return labels
     except json.JSONDecodeError as e:
-        print(f"Error while decoding json file '{path}' in line {e.lineno}: {e.msg}")
+        print(
+            f"Error while decoding json file '{path}' in"
+            f" line {e.lineno}: {e.msg}",
+        )
         exit(1)
     except IOError as e:
         print(f"Error while opening file '{path}': {e.strerror}")
@@ -72,7 +75,8 @@ def parse_arguments():
     report_parser.add_argument(
         "-T",
         "--token",
-        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)",
+        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN"
+        " environment variable)",
     )
 
     report_parser.add_argument(
@@ -118,7 +122,8 @@ def parse_arguments():
     sync_parser.add_argument(
         "-T",
         "--token",
-        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)",
+        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN"
+        " environment variable)",
     )
 
     sync_parser.add_argument(
@@ -189,7 +194,8 @@ def parse_arguments():
     apply_parser.add_argument(
         "-T",
         "--token",
-        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN environment variable)",
+        help="GitHub access token (also settable with a GITHUB_ACCESS_TOKEN"
+        "environment variable)",
     )
 
     apply_parser.add_argument(
@@ -242,7 +248,7 @@ def parse_arguments():
 
 
 def filterRepository(repository: dict) -> bool:
-    if repository["archived"] == True:
+    if repository["archived"]:
         return False
     return True
 
@@ -410,7 +416,8 @@ def checkAccessToken(required: bool):
             print("Error: No access token defined!", file=sys.stderr)
             exit(1)
         print(
-            "Warning: No access token defined. Only publicly visible data is available!",
+            "Warning: No access token defined. "
+            "Only publicly visible data is available!",
             file=sys.stderr,
         )
 

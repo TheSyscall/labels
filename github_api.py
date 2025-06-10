@@ -1,5 +1,7 @@
+import json
 import os
 import re
+import sys
 
 import requests
 
@@ -52,8 +54,9 @@ def fetchJson(endpoint: str, params={}, body={}, method="GET"):
     result = response.content
     try:
         result = response.json()
-    except:
-        pass
+    except json.JSONDecodeError as e:
+        print(f"Failed to decode API response! {e.msg}", file=sys.stderr)
+        exit(1)
 
     return (result, response.status_code, response.headers)
 

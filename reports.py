@@ -118,11 +118,21 @@ def createMarkdownReport(diff: LabelDiff):
         for label in diff.diff:
             out += f"- {label['truth']['name']}\n"
             if "color" in label["delta"]:
-                out += f"  - Change color from '{label['actual']['color']}' to '{label['truth']['color']}'\n"
+                out += (
+                    f"  - Change color from '{label['actual']['color']}' "
+                    f"to '{label['truth']['color']}'\n"
+                )
             if "description" in label["delta"]:
-                out += f"  - Change description from '{label['actual']['description']}' to '{label['truth']['description']}'\n"
+                out += (
+                    "  - Change description from "
+                    f"'{label['actual']['description']}' to "
+                    f"'{label['truth']['description']}'\n"
+                )
             if "name" in label["delta"]:
-                out += f"  - Rename from '{label['actual']['name']}' to '{label['truth']['name']}'\n"
+                out += (
+                    f"  - Rename from '{label['actual']['name']}' to "
+                    f"'{label['truth']['name']}'\n"
+                )
 
     return out
 
@@ -138,11 +148,14 @@ def terminalPrint(diff: LabelDiff, action: str, label: dict):
         name = label["actual"]["name"]
         if "color" in label["delta"]:
             changes.append(
-                f"change color of '{name}' from '{label['actual']['color']}' to '{label['truth']['color']}'",
+                f"change color of '{name}' from '{label['actual']['color']}' "
+                f"to '{label['truth']['color']}'",
             )
         if "description" in label["delta"]:
             changes.append(
-                f"change description of '{name}' from '{label['actual']['description']}' to '{label['truth']['description']}'",
+                f"change description of '{name}' from "
+                f"'{label['actual']['description']}' to "
+                f"'{label['truth']['description']}'",
             )
         if "name" in label["delta"]:
             changes.append(
