@@ -26,6 +26,9 @@ def readFromFile(path: str):
         labels = data["labels"]
 
         return labels
+    except json.JSONDecodeError as e:
+        print(f"Error while decoding json file '{path}' in line {e.lineno}: {e.msg}")
+        exit(1)
     except IOError as e:
         print(f"Error while opening file '{path}': {e.strerror}")
         exit(1)
