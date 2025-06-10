@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 import argparse
 import json
 import os
 import sys
+from typing import Any
+from typing import Optional
+from typing import Tuple
 
 import jsonschema
 
@@ -11,7 +16,7 @@ import label_diff
 import reports
 
 
-def validate_json_schema(data: dict) -> bool:
+def validate_json_schema(data: dict[str, Any]) -> bool:
     dirname = os.path.dirname(os.path.abspath(__file__))
     path = dirname + "/labels-schama.json"
     schema = None
@@ -48,7 +53,7 @@ def validate_json_schema(data: dict) -> bool:
     return True
 
 
-def read_labels_from_json_file(path: str):
+def read_labels_from_json_file(path: str) -> list[dict[str, Any]]:
     if not os.path.exists(path):
         print(f"File not found: {path}", file=sys.stderr)
         exit(1)
@@ -65,6 +70,7 @@ def read_labels_from_json_file(path: str):
         validate_json_schema(data)
 
         labels = data["labels"]
+        assert isinstance(labels, list)
 
         return labels
     except json.JSONDecodeError as e:
@@ -85,11 +91,11 @@ def read_labels_from_json_file(path: str):
         exit(1)
 
 
-def load_source(source: str):
+def load_source(source: str) -> list[dict[str, Any]]:
     return read_labels_from_json_file(source)
 
 
-def parse_target(target: str):
+def parse_target(target: str) -> Tuple[str, Optional[str]]:
     parts = target.split("/")
 
     if len(parts) == 2:
@@ -101,7 +107,7 @@ def parse_target(target: str):
         exit(2)
 
 
-def parse_arguments():
+def parse_arguments() -> Any:
     parser = argparse.ArgumentParser(
         description="Manage labels for a GitHub repository.",
     )
@@ -288,13 +294,13 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def filter_repository(repository: dict) -> bool:
+def filter_repository(repository: dict[str, Any]) -> bool:
     if repository["archived"]:
         return False
     return True
 
 
-def _report(format: str, diffs: list[label_diff.LabelDiff]):
+def _report(format: str, diffs: list[label_diff.LabelDiff]) -> None:
     if format == "markdown":
         is_single_repo = len(diffs) == 1
         if not is_single_repo:
@@ -320,7 +326,11 @@ def _report(format: str, diffs: list[label_diff.LabelDiff]):
         print(f"Unsupported format '{format}'", file=sys.stderr)
 
 
-def command_report_namespace(args, namespace, truth):
+def command_report_namespace(
+    args: Any,
+    namespace: str,
+    truth: list[dict[str, Any]],
+) -> None:
     (repos, err) = github_api.fetch_repositories(namespace)
     if err is not None:
         print(err, file=sys.stderr)
@@ -353,7 +363,12 @@ def command_report_namespace(args, namespace, truth):
     _report(args.format, diffs)
 
 
-def command_report_repository(args, namespace, repository, truth):
+def command_report_repository(
+    args: Any,
+    namespace: str,
+    repository: str,
+    truth: list[dict[str, Any]],
+) -> None:
     (repo, err) = github_api.fetch_labels(namespace, repository)
     if err is not None:
         print(err, file=sys.stderr)
@@ -371,12 +386,12 @@ def command_report_repository(args, namespace, repository, truth):
     _report(args.format, [diff])
 
 
-def command_reformat(args):
+def command_reformat(args: Any) -> None:
     diffs = load_json_report(args.source)
     _report(args.format, diffs)
 
 
-def _apply(args, diff: label_diff.LabelDiff):
+def _apply(args: Any, diff: label_diff.LabelDiff) -> None:
     if args.create:
         actions.apply_create(diff, args.assumeyes, reports.terminal_print)
 
@@ -387,7 +402,11 @@ def _apply(args, diff: label_diff.LabelDiff):
         actions.apply_modify(diff, args.assumeyes, reports.terminal_print)
 
 
-def command_sync_namespace(args, namespace, truth):
+def command_sync_namespace(
+    args: Any,
+    namespace: str,
+    truth: list[dict[str, Any]],
+) -> None:
     (repos, err) = github_api.fetch_repositories(namespace)
     if err is not None:
         print(err, file=sys.stderr)
@@ -416,7 +435,12 @@ def command_sync_namespace(args, namespace, truth):
         _apply(args, diff)
 
 
-def command_sync_repository(args, namespace, repository, truth):
+def command_sync_repository(
+    args: Any,
+    namespace: str,
+    repository: str,
+    truth: list[dict[str, Any]],
+) -> None:
     (repo, err) = github_api.fetch_labels(namespace, repository)
     if err is not None:
         print(err, file=sys.stderr)
@@ -434,7 +458,7 @@ def command_sync_repository(args, namespace, repository, truth):
     _apply(args, diff)
 
 
-def load_json_report(path: str):
+def load_json_report(path: str) -> list[label_diff.LabelDiff]:
     diffs = []
     with open(path, "r") as file:
         data = json.load(file)
@@ -446,12 +470,12 @@ def load_json_report(path: str):
     return diffs
 
 
-def command_apply(args):
+def command_apply(args: Any) -> None:
     for diff in load_json_report(args.source):
         _apply(args, diff)
 
 
-def check_access_token(required: bool):
+def check_access_token(required: bool) -> None:
     if "GITHUB_ACCESS_TOKEN" not in os.environ:
         if required:
             print("Error: No access token defined!", file=sys.stderr)
@@ -463,7 +487,7 @@ def check_access_token(required: bool):
         )
 
 
-def check_action_param(args):
+def check_action_param(args: Any) -> None:
     if not args.create and not args.delete and not args.modify:
         print(
             "At least one of --create, --delete, --modify must be set",
@@ -472,7 +496,7 @@ def check_action_param(args):
         exit(2)
 
 
-def main():
+def main() -> None:
     args = parse_arguments()
 
     if args.command == "reformat":

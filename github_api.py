@@ -2,11 +2,20 @@ import json
 import os
 import re
 import sys
+from typing import Any
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import requests
 
 
-def fetch_json(endpoint: str, params={}, body={}, method="GET"):
+def fetch_json(
+    endpoint: str,
+    params: dict[str, Any] = {},
+    body: dict[str, Any] = {},
+    method: str = "GET",
+) -> Tuple[Union[dict[str, Any], list[dict[str, Any]]], int, dict[str, Any]]:
     base_url = "https://api.github.com"
     url = base_url + endpoint
     if endpoint.startswith("http"):
@@ -20,8 +29,6 @@ def fetch_json(endpoint: str, params={}, body={}, method="GET"):
     token = os.getenv("GITHUB_ACCESS_TOKEN")
     if token is not None and token != "":
         headers["Authorization"] = "token " + token
-
-    response = None
 
     match (method):
         case "GET":
@@ -58,11 +65,16 @@ def fetch_json(endpoint: str, params={}, body={}, method="GET"):
         print(f"Failed to decode API response! {e.msg}", file=sys.stderr)
         exit(1)
 
-    return (result, response.status_code, response.headers)
+    return (result, response.status_code, dict(response.headers))
 
 
-def fetch_paginated_json(endpoint: str, params={}, body={}, method="GET"):
-    content = []
+def fetch_paginated_json(
+    endpoint: str,
+    params: dict[str, Any] = {},
+    body: dict[str, Any] = {},
+    method: str = "GET",
+) -> Tuple[list[dict[str, Any]], Optional[str]]:
+    content: list[dict[str, Any]] = []
     params["per_page"] = 100
 
     code = 0
@@ -72,11 +84,11 @@ def fetch_paginated_json(endpoint: str, params={}, body={}, method="GET"):
         if code >= 200 and code < 300:
             pass  # Nothing to do
         elif code == 404:
-            return {}, "Resource not found"
-        elif code < 0:
-            return {}, data
+            return [], "Resource not found"
         else:
-            return {}, "Unknown error"
+            return [], "Unknown error"
+
+        assert isinstance(data, list)
 
         content += data
 
@@ -92,11 +104,18 @@ def fetch_paginated_json(endpoint: str, params={}, body={}, method="GET"):
     return content, None
 
 
-def fetch_labels(namespace: str, repository: str):
+def fetch_labels(
+    namespace: str,
+    repository: str,
+) -> Tuple[list[dict[str, Any]], Optional[str]]:
     return fetch_paginated_json(f"/repos/{namespace}/{repository}/labels")
 
 
-def delete_label(namespace: str, repository: str, label: str):
+def delete_label(
+    namespace: str,
+    repository: str,
+    label: str,
+) -> Tuple[bool, Optional[str]]:
     (data, code, _) = fetch_json(
         f"/repos/{namespace}/{repository}/labels/{label}",
         method="DELETE",
@@ -106,8 +125,6 @@ def delete_label(namespace: str, repository: str, label: str):
         return True, None
     elif code == 404:
         return False, "Not found"
-    elif code < 0:
-        return {}, data
     else:
         return False, "Unknown error"
 
@@ -116,9 +133,9 @@ def create_label(
     namespace: str,
     repository: str,
     name: str,
-    description: str = None,
-    color: str = None,
-):
+    description: Optional[str] = None,
+    color: Optional[str] = None,
+) -> Tuple[bool, Optional[str]]:
     body = {
         "name": name,
     }
@@ -140,8 +157,6 @@ def create_label(
         return False, "Resource not found"
     elif code == 422:
         return False, "Validation failed"
-    elif code < 0:
-        return {}, data
     else:
         return False, "Unknown error"
 
@@ -150,10 +165,10 @@ def update_label(
     namespace: str,
     repository: str,
     old_name: str,
-    new_name: str = None,
-    description: str = None,
-    color: str = None,
-):
+    new_name: Optional[str] = None,
+    description: Optional[str] = None,
+    color: Optional[str] = None,
+) -> Tuple[bool, Optional[str]]:
     body = {}
 
     if new_name is not None:
@@ -175,13 +190,13 @@ def update_label(
         return False, "Not found"
     elif code == 422:
         return False, "Validation failed"
-    elif code < 0:
-        return {}, data
     else:
         return False, "Unknown error"
 
 
-def fetch_repositories(namespace: str):
+def fetch_repositories(
+    namespace: str,
+) -> Tuple[list[dict[str, Any]], Optional[str]]:
     if namespace == "-":
         (data, err) = fetch_paginated_json("/user/repos")
     else:
@@ -192,7 +207,7 @@ def fetch_repositories(namespace: str):
     return data, err
 
 
-def parse_link_header(header: str):
+def parse_link_header(header: str) -> dict[str, str]:
     regex = re.compile(r'<(.*?)>(?:.*?)rel="([A-z\s]*)"')
 
     links = {}

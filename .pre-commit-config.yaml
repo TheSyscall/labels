@@ -54,7 +54,11 @@ repos:
     rev: v1.16.0
     hooks:
       - id: mypy
-        args: [--strict, --ignore-missing-imports]
+        require_serial: true
+        args: [--strict]
+        additional_dependencies:
+          - types-requests
+          - types-jsonschema
   - repo: https://github.com/thesyscall/no-commit
     rev: 1.0.0
     hooks:

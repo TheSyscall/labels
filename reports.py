@@ -1,9 +1,10 @@
 import json
+from typing import Any
 
 from label_diff import LabelDiff
 
 
-def create_json_report(diff: LabelDiff):
+def create_json_report(diff: LabelDiff) -> str:
     return json.dumps(
         {
             "namespace": diff.namespace,
@@ -16,7 +17,7 @@ def create_json_report(diff: LabelDiff):
     )
 
 
-def _create_markdown_table_header(columns: dict) -> str:
+def _create_markdown_table_header(columns: dict[str, Any]) -> str:
     out = _create_markdown_table_row(columns, {key: key for key in columns})
 
     for column, length in columns.items():
@@ -27,7 +28,10 @@ def _create_markdown_table_header(columns: dict) -> str:
     return out
 
 
-def _create_markdown_table_row(columns: dict, row: dict) -> str:
+def _create_markdown_table_row(
+    columns: dict[str, Any],
+    row: dict[str, Any],
+) -> str:
     out = ""
 
     for column, length in columns.items():
@@ -40,7 +44,7 @@ def _create_markdown_table_row(columns: dict, row: dict) -> str:
     return out
 
 
-def _create_markdown_table(rows: list):
+def _create_markdown_table(rows: list[dict[str, Any]]) -> str:
     columns = {}
 
     for row in rows:
@@ -59,7 +63,7 @@ def _create_markdown_table(rows: list):
     return out
 
 
-def create_markdown_table_report(diffs: list[LabelDiff]):
+def create_markdown_table_report(diffs: list[LabelDiff]) -> str:
     rows = []
 
     for diff in diffs:
@@ -90,7 +94,7 @@ def create_markdown_table_report(diffs: list[LabelDiff]):
     return _create_markdown_table(rows)
 
 
-def create_markdown_report(diff: LabelDiff):
+def create_markdown_report(diff: LabelDiff) -> str:
     out = f"## Repository: {diff.repository}\n"
 
     if not diff.is_change():
@@ -137,7 +141,11 @@ def create_markdown_report(diff: LabelDiff):
     return out
 
 
-def terminal_print(diff: LabelDiff, action: str, label: dict):
+def terminal_print(
+    diff: LabelDiff,
+    action: str,
+    label: dict[str, Any],
+) -> None:
     print(f"{diff.namespace}/{diff.repository}: ", end="")
     if action == "delete":
         print(f"delete '{label['name']}'")

@@ -1,10 +1,13 @@
 import sys
+from typing import Any
+from typing import Callable
+from typing import Optional
 
 import github_api
 from label_diff import LabelDiff
 
 
-def _confirm():
+def _confirm() -> bool:
     while True:
         selection = input("Is this ok [Y/n]: ").lower()
         if selection == "n":
@@ -13,7 +16,14 @@ def _confirm():
             return True
 
 
-def apply_create(diff: LabelDiff, yes: bool = False, report=None):
+report_function = Callable[[LabelDiff, str, dict[str, Any]], None]
+
+
+def apply_create(
+    diff: LabelDiff,
+    yes: bool = False,
+    report: Optional[report_function] = None,
+) -> None:
     for label in diff.missing:
         if report is not None:
             report(diff, "create", label)
@@ -32,7 +42,11 @@ def apply_create(diff: LabelDiff, yes: bool = False, report=None):
             print(err, file=sys.stderr)
 
 
-def apply_delete(diff: LabelDiff, yes: bool = False, report=None):
+def apply_delete(
+    diff: LabelDiff,
+    yes: bool = False,
+    report: Optional[report_function] = None,
+) -> None:
     for label in diff.extra:
         if report is not None:
             report(diff, "delete", label)
@@ -49,7 +63,11 @@ def apply_delete(diff: LabelDiff, yes: bool = False, report=None):
             print(err, file=sys.stderr)
 
 
-def apply_modify(diff: LabelDiff, yes: bool = False, report=None):
+def apply_modify(
+    diff: LabelDiff,
+    yes: bool = False,
+    report: Optional[report_function] = None,
+) -> None:
     for label in diff.diff:
         if report is not None:
             report(diff, "modify", label)
