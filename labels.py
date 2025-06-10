@@ -9,7 +9,7 @@ import label_diff
 import reports
 
 
-def readFromFile(path: str):
+def read_labels_from_json_file(path: str):
     if not os.path.exists(path):
         print(f"File not found: {path}", file=sys.stderr)
         exit(1)
@@ -44,11 +44,11 @@ def readFromFile(path: str):
         exit(1)
 
 
-def loadSource(source: str):
-    return readFromFile(source)
+def load_source(source: str):
+    return read_labels_from_json_file(source)
 
 
-def parseTarget(target: str):
+def parse_target(target: str):
     parts = target.split("/")
 
     if len(parts) == 2:
@@ -247,7 +247,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def filterRepository(repository: dict) -> bool:
+def filter_repository(repository: dict) -> bool:
     if repository["archived"]:
         return False
     return True
@@ -258,21 +258,21 @@ def _report(format: str, diffs: list[label_diff.LabelDiff]):
         is_single_repo = len(diffs) == 1
         if not is_single_repo:
             print(f"# Namespace: {diffs[0].namespace}\n")
-            print(reports.createMarkdownTableReport(diffs))
+            print(reports.create_markdown_table_report(diffs))
         for diff in diffs:
             if is_single_repo or diff.isChange():
-                print(reports.createMarkdownReport(diff))
+                print(reports.create_markdown_report(diff))
     elif format == "summary":
-        print(reports.createMarkdownTableReport(diffs))
+        print(reports.create_markdown_table_report(diffs))
     elif format == "json":
         # FIXME: Super hacky
         if len(diffs) > 0:
             data = []
             for diff in diffs:
-                data.append(json.loads(reports.createJsonReport(diff)))
+                data.append(json.loads(reports.create_json_report(diff)))
             print(json.dumps(data))
             return
-        print(reports.createJsonReport(diff))
+        print(reports.create_json_report(diff))
     elif format == "none":
         pass  # Nothing to do
     else:
@@ -280,7 +280,7 @@ def _report(format: str, diffs: list[label_diff.LabelDiff]):
 
 
 def command_report_namespace(args, namespace, truth):
-    (repos, err) = github_api.fetchRepositories(namespace)
+    (repos, err) = github_api.fetch_repositories(namespace)
     if err is not None:
         print(err, file=sys.stderr)
         exit(1)
@@ -288,18 +288,18 @@ def command_report_namespace(args, namespace, truth):
     diffs = []
 
     for repo in repos:
-        if not filterRepository(repo):
+        if not filter_repository(repo):
             continue
         _namespace = repo["owner"]["login"]
         _repo = repo["name"]
 
-        (repo_lables, err) = github_api.fetchLabels(_namespace, _repo)
+        (repo_lables, err) = github_api.fetch_labels(_namespace, _repo)
         if err is not None:
             print(err, file=sys.stderr)
             exit(1)
 
         diffs.append(
-            label_diff.createDiff(
+            label_diff.create_diff(
                 truth,
                 repo_lables,
                 _namespace,
@@ -313,12 +313,12 @@ def command_report_namespace(args, namespace, truth):
 
 
 def command_report_repository(args, namespace, repository, truth):
-    (repo, err) = github_api.fetchLabels(namespace, repository)
+    (repo, err) = github_api.fetch_labels(namespace, repository)
     if err is not None:
         print(err, file=sys.stderr)
         exit(1)
 
-    diff = label_diff.createDiff(
+    diff = label_diff.create_diff(
         truth,
         repo,
         namespace,
@@ -331,39 +331,39 @@ def command_report_repository(args, namespace, repository, truth):
 
 
 def command_reformat(args):
-    diffs = loadJsonReport(args.source)
+    diffs = load_json_report(args.source)
     _report(args.format, diffs)
 
 
 def _apply(args, diff: label_diff.LabelDiff):
     if args.create:
-        actions.applyAllCreate(diff, args.assumeyes, reports.terminalPrint)
+        actions.apply_create(diff, args.assumeyes, reports.terminal_print)
 
     if args.delete:
-        actions.applyAllDelete(diff, args.assumeyes, reports.terminalPrint)
+        actions.apply_delete(diff, args.assumeyes, reports.terminal_print)
 
     if args.modify:
-        actions.applyAllModify(diff, args.assumeyes, reports.terminalPrint)
+        actions.apply_modify(diff, args.assumeyes, reports.terminal_print)
 
 
 def command_sync_namespace(args, namespace, truth):
-    (repos, err) = github_api.fetchRepositories(namespace)
+    (repos, err) = github_api.fetch_repositories(namespace)
     if err is not None:
         print(err, file=sys.stderr)
         exit(1)
 
     for repo in repos:
-        if not filterRepository(repo):
+        if not filter_repository(repo):
             continue
         _namespace = repo["owner"]["login"]
         _repo = repo["name"]
 
-        (repo_lables, err) = github_api.fetchLabels(_namespace, _repo)
+        (repo_lables, err) = github_api.fetch_labels(_namespace, _repo)
         if err is not None:
             print(err, file=sys.stderr)
             exit(1)
 
-        diff = label_diff.createDiff(
+        diff = label_diff.create_diff(
             truth,
             repo_lables,
             _namespace,
@@ -376,12 +376,12 @@ def command_sync_namespace(args, namespace, truth):
 
 
 def command_sync_repository(args, namespace, repository, truth):
-    (repo, err) = github_api.fetchLabels(namespace, repository)
+    (repo, err) = github_api.fetch_labels(namespace, repository)
     if err is not None:
         print(err, file=sys.stderr)
         exit(1)
 
-    diff = label_diff.createDiff(
+    diff = label_diff.create_diff(
         truth,
         repo,
         namespace,
@@ -393,24 +393,24 @@ def command_sync_repository(args, namespace, repository, truth):
     _apply(args, diff)
 
 
-def loadJsonReport(path: str):
+def load_json_report(path: str):
     diffs = []
     with open(path, "r") as file:
         data = json.load(file)
 
     for jdiff in data:
-        diff = label_diff.LabelDiff.fromDict(jdiff)
+        diff = label_diff.LabelDiff.from_dict(jdiff)
         diffs.append(diff)
 
     return diffs
 
 
 def command_apply(args):
-    for diff in loadJsonReport(args.source):
+    for diff in load_json_report(args.source):
         _apply(args, diff)
 
 
-def checkAccessToken(required: bool):
+def check_access_token(required: bool):
     if "GITHUB_ACCESS_TOKEN" not in os.environ:
         if required:
             print("Error: No access token defined!", file=sys.stderr)
@@ -422,7 +422,7 @@ def checkAccessToken(required: bool):
         )
 
 
-def checkActionParamSet(args):
+def check_action_param(args):
     if not args.create and not args.delete and not args.modify:
         print(
             "At least one of --create, --delete, --modify must be set",
@@ -442,18 +442,18 @@ def main():
         os.environ["GITHUB_ACCESS_TOKEN"] = args.token
 
     if args.command == "apply":
-        checkAccessToken(True)
-        checkActionParamSet(args)
+        check_access_token(True)
+        check_action_param(args)
 
         command_apply(args)
         return
 
-    truth = loadSource(args.source)
+    truth = load_source(args.source)
 
-    (namespace, repository) = parseTarget(args.target)
+    (namespace, repository) = parse_target(args.target)
 
     if args.command == "report":
-        checkAccessToken(False)
+        check_access_token(False)
 
         if repository is None:
             command_report_namespace(args, namespace, truth)
@@ -463,8 +463,8 @@ def main():
         return
 
     elif args.command == "sync":
-        checkAccessToken(True)
-        checkActionParamSet(args)
+        check_access_token(True)
+        check_action_param(args)
 
         if repository is None:
             command_sync_namespace(args, namespace, truth)

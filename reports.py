@@ -3,7 +3,7 @@ import json
 from label_diff import LabelDiff
 
 
-def createJsonReport(diff: LabelDiff):
+def create_json_report(diff: LabelDiff):
     return json.dumps(
         {
             "namespace": diff.namespace,
@@ -16,8 +16,8 @@ def createJsonReport(diff: LabelDiff):
     )
 
 
-def _createMarkdownTableHeader(columns: dict) -> str:
-    out = _createMarkdownTableRow(columns, {key: key for key in columns})
+def _create_markdown_table_header(columns: dict) -> str:
+    out = _create_markdown_table_row(columns, {key: key for key in columns})
 
     for column, length in columns.items():
         out += "|" + "-" * (length + 2)
@@ -27,7 +27,7 @@ def _createMarkdownTableHeader(columns: dict) -> str:
     return out
 
 
-def _createMarkdownTableRow(columns: dict, row: dict) -> str:
+def _create_markdown_table_row(columns: dict, row: dict) -> str:
     out = ""
 
     for column, length in columns.items():
@@ -40,7 +40,7 @@ def _createMarkdownTableRow(columns: dict, row: dict) -> str:
     return out
 
 
-def _createMarkdownTable(rows: list):
+def _create_markdown_table(rows: list):
     columns = {}
 
     for row in rows:
@@ -52,14 +52,14 @@ def _createMarkdownTable(rows: list):
             if value_length > columns[key]:
                 columns[key] = value_length
 
-    out = _createMarkdownTableHeader(columns)
+    out = _create_markdown_table_header(columns)
     for row in rows:
-        out += _createMarkdownTableRow(columns, row)
+        out += _create_markdown_table_row(columns, row)
 
     return out
 
 
-def createMarkdownTableReport(diffs: list[LabelDiff]):
+def create_markdown_table_report(diffs: list[LabelDiff]):
     rows = []
 
     for diff in diffs:
@@ -87,13 +87,13 @@ def createMarkdownTableReport(diffs: list[LabelDiff]):
             },
         )
 
-    return _createMarkdownTable(rows)
+    return _create_markdown_table(rows)
 
 
-def createMarkdownReport(diff: LabelDiff):
+def create_markdown_report(diff: LabelDiff):
     out = f"## Repository: {diff.repository}\n"
 
-    if not diff.isChange():
+    if not diff.is_change():
         out += "\nNothing to change!\n"
         return out
 
@@ -137,7 +137,7 @@ def createMarkdownReport(diff: LabelDiff):
     return out
 
 
-def terminalPrint(diff: LabelDiff, action: str, label: dict):
+def terminal_print(diff: LabelDiff, action: str, label: dict):
     print(f"{diff.namespace}/{diff.repository}: ", end="")
     if action == "delete":
         print(f"delete '{label['name']}'")
