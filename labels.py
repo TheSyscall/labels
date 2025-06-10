@@ -10,13 +10,35 @@ import reports
 
 
 def readFromFile(path: str):
-    data = None
-    with open(path, "r") as f:
-        data = json.load(f)
+    if not os.path.exists(path):
+        print(f"File not found: {path}", file=sys.stderr)
+        exit(1)
 
-    labels = data["labels"]
+    if not os.path.isfile(path):
+        print(f"'{path}' is not a file", file=sys.stderr)
+        exit(1)
 
-    return labels
+    try:
+        data = None
+        with open(path, "r") as f:
+            data = json.load(f)
+
+        labels = data["labels"]
+
+        return labels
+    except json.JSONDecodeError as e:
+        print(f"Error while decoding json file '{path}' in line {e.lineno}: {e.msg}")
+        exit(1)
+    except IOError as e:
+        print(f"Error while opening file '{path}': {e.strerror}")
+        exit(1)
+    except Exception as e:
+        print(f"Error while opening file '{path}': ", file=sys.stderr, end="")
+        if hasattr(e, "message"):
+            print(e.message, file=sys.stderr)
+        else:
+            print(e, file=sys.stderr)
+        exit(1)
 
 
 def loadSource(source: str):
