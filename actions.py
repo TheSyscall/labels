@@ -13,14 +13,14 @@ def _confirm():
             return True
 
 
-def applyAllCreate(diff: LabelDiff, yes: bool = False, report=None):
+def apply_create(diff: LabelDiff, yes: bool = False, report=None):
     for label in diff.missing:
         if report is not None:
             report(diff, "create", label)
         if not yes:
             if not _confirm():
                 continue
-        (response, err) = github_api.createLabel(
+        (response, err) = github_api.create_label(
             diff.namespace,
             diff.repository,
             label["name"],
@@ -32,14 +32,14 @@ def applyAllCreate(diff: LabelDiff, yes: bool = False, report=None):
             print(err, file=sys.stderr)
 
 
-def applyAllDelete(diff: LabelDiff, yes: bool = False, report=None):
+def apply_delete(diff: LabelDiff, yes: bool = False, report=None):
     for label in diff.extra:
         if report is not None:
             report(diff, "delete", label)
         if not yes:
             if not _confirm():
                 continue
-        (response, err) = github_api.deleteLabel(
+        (response, err) = github_api.delete_label(
             diff.namespace,
             diff.repository,
             label["name"],
@@ -49,23 +49,27 @@ def applyAllDelete(diff: LabelDiff, yes: bool = False, report=None):
             print(err, file=sys.stderr)
 
 
-def applyAllModify(diff: LabelDiff, yes: bool = False, report=None):
+def apply_modify(diff: LabelDiff, yes: bool = False, report=None):
     for label in diff.diff:
         if report is not None:
             report(diff, "modify", label)
         if not yes:
             if not _confirm():
                 continue
-        (response, err) = github_api.updateLabel(
+
+        color = label["truth"]["color"] if "color" in label["delta"] else None
+        description = (
+            label["truth"]["description"]
+            if "description" in label["delta"]
+            else None
+        )
+
+        (response, err) = github_api.update_label(
             diff.namespace,
             diff.repository,
             label["actual"]["name"],
-            description=(
-                label["truth"]["description"]
-                if "description" in label["delta"]
-                else None
-            ),
-            color=label["truth"]["color"] if "color" in label["delta"] else None,
+            description=description,
+            color=color,
         )
 
         if err is not None:

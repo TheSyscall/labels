@@ -1,10 +1,12 @@
+import json
 import os
 import re
+import sys
 
 import requests
 
 
-def fetchJson(endpoint: str, params={}, body={}, method="GET"):
+def fetch_json(endpoint: str, params={}, body={}, method="GET"):
     base_url = "https://api.github.com"
     url = base_url + endpoint
     if endpoint.startswith("http"):
@@ -52,19 +54,20 @@ def fetchJson(endpoint: str, params={}, body={}, method="GET"):
     result = response.content
     try:
         result = response.json()
-    except:
-        pass
+    except json.JSONDecodeError as e:
+        print(f"Failed to decode API response! {e.msg}", file=sys.stderr)
+        exit(1)
 
     return (result, response.status_code, response.headers)
 
 
-def fetchPaginatedJson(endpoint: str, params={}, body={}, method="GET"):
+def fetch_paginated_json(endpoint: str, params={}, body={}, method="GET"):
     content = []
     params["per_page"] = 100
 
     code = 0
     while True:
-        (data, code, headers) = fetchJson(endpoint, params, body, method)
+        (data, code, headers) = fetch_json(endpoint, params, body, method)
 
         if code >= 200 and code < 300:
             pass  # Nothing to do
@@ -79,7 +82,7 @@ def fetchPaginatedJson(endpoint: str, params={}, body={}, method="GET"):
 
         if "Link" not in headers:
             break
-        links = parseLinkHeader(headers["Link"])
+        links = parse_link_header(headers["Link"])
 
         if "next" not in links:
             break
@@ -89,12 +92,12 @@ def fetchPaginatedJson(endpoint: str, params={}, body={}, method="GET"):
     return content, None
 
 
-def fetchLabels(namespace: str, repository: str):
-    return fetchPaginatedJson(f"/repos/{namespace}/{repository}/labels")
+def fetch_labels(namespace: str, repository: str):
+    return fetch_paginated_json(f"/repos/{namespace}/{repository}/labels")
 
 
-def deleteLabel(namespace: str, repository: str, label: str):
-    (data, code, _) = fetchJson(
+def delete_label(namespace: str, repository: str, label: str):
+    (data, code, _) = fetch_json(
         f"/repos/{namespace}/{repository}/labels/{label}",
         method="DELETE",
     )
@@ -109,7 +112,7 @@ def deleteLabel(namespace: str, repository: str, label: str):
         return False, "Unknown error"
 
 
-def createLabel(
+def create_label(
     namespace: str,
     repository: str,
     name: str,
@@ -125,7 +128,7 @@ def createLabel(
     if color is not None:
         body["color"] = color
 
-    (data, code, _) = fetchJson(
+    (data, code, _) = fetch_json(
         f"/repos/{namespace}/{repository}/labels",
         body=body,
         method="POST",
@@ -143,7 +146,7 @@ def createLabel(
         return False, "Unknown error"
 
 
-def updateLabel(
+def update_label(
     namespace: str,
     repository: str,
     old_name: str,
@@ -160,7 +163,7 @@ def updateLabel(
     if color is not None:
         body["color"] = color
 
-    (data, code, _) = fetchJson(
+    (data, code, _) = fetch_json(
         f"/repos/{namespace}/{repository}/labels/{old_name}",
         body=body,
         method="PATCH",
@@ -178,18 +181,18 @@ def updateLabel(
         return False, "Unknown error"
 
 
-def fetchRepositories(namespace: str):
+def fetch_repositories(namespace: str):
     if namespace == "-":
-        (data, err) = fetchPaginatedJson("/user/repos")
+        (data, err) = fetch_paginated_json("/user/repos")
     else:
-        (data, err) = fetchPaginatedJson(f"/orgs/{namespace}/repos")
+        (data, err) = fetch_paginated_json(f"/orgs/{namespace}/repos")
         if err is not None:
-            (data, err) = fetchPaginatedJson(f"/users/{namespace}/repos")
+            (data, err) = fetch_paginated_json(f"/users/{namespace}/repos")
 
     return data, err
 
 
-def parseLinkHeader(header: str):
+def parse_link_header(header: str):
     regex = re.compile(r'<(.*?)>(?:.*?)rel="([A-z\s]*)"')
 
     links = {}

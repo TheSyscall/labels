@@ -7,11 +7,13 @@ class LabelDiff:
         self.extra = extra
         self.diff = diff
 
-    def isChange(self):
-        return len(self.missing) > 0 or len(self.extra) > 0 or len(self.diff) > 0
+    def is_change(self):
+        return (
+            len(self.missing) > 0 or len(self.extra) > 0 or len(self.diff) > 0
+        )
 
     @classmethod
-    def fromDict(cls, dict: dict):
+    def from_dict(cls, dict: dict):
         return cls(
             dict["namespace"],
             dict["repository"],
@@ -22,14 +24,14 @@ class LabelDiff:
         )
 
 
-def getByName(list: dict, name: str):
+def get_by_name(list: dict, name: str):
     for label in list:
         if label["name"] == name:
             return label
     return None
 
 
-def getByAlias(true_list: dict, actual_label: dict):
+def get_by_alias(true_list: dict, actual_label: dict):
     for true_label in true_list:
         if "alias" not in true_label:
             continue
@@ -38,7 +40,7 @@ def getByAlias(true_list: dict, actual_label: dict):
     return None
 
 
-def getByAliasReverse(actual_list: dict, true_label: dict):
+def get_by_alias_reverse(actual_list: dict, true_label: dict):
     if "alias" not in true_label:
         return None
     for alias in true_label["alias"]:
@@ -48,7 +50,7 @@ def getByAliasReverse(actual_list: dict, true_label: dict):
     return None
 
 
-def createDiff(
+def create_diff(
     truth: dict,
     actual: dict,
     namespace: str,
@@ -62,9 +64,9 @@ def createDiff(
     diff = []
 
     for true_label in truth:
-        found_label = getByName(actual, true_label["name"])
+        found_label = get_by_name(actual, true_label["name"])
         if found_label is None:
-            found_label = getByAliasReverse(actual, true_label)
+            found_label = get_by_alias_reverse(actual, true_label)
 
         if found_label is None:
             if (
@@ -109,9 +111,9 @@ def createDiff(
         valid.append(found_label)
 
     for actual_label in actual:
-        found_label = getByName(truth, actual_label["name"])
+        found_label = get_by_name(truth, actual_label["name"])
         if found_label is None:
-            found_label = getByAlias(truth, actual_label)
+            found_label = get_by_alias(truth, actual_label)
 
         if found_label is None:
             extra.append(actual_label)

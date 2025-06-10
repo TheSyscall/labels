@@ -3,7 +3,7 @@ import json
 from label_diff import LabelDiff
 
 
-def createJsonReport(diff: LabelDiff):
+def create_json_report(diff: LabelDiff):
     return json.dumps(
         {
             "namespace": diff.namespace,
@@ -16,8 +16,8 @@ def createJsonReport(diff: LabelDiff):
     )
 
 
-def _createMarkdownTableHeader(columns: dict) -> str:
-    out = _createMarkdownTableRow(columns, {key: key for key in columns})
+def _create_markdown_table_header(columns: dict) -> str:
+    out = _create_markdown_table_row(columns, {key: key for key in columns})
 
     for column, length in columns.items():
         out += "|" + "-" * (length + 2)
@@ -27,7 +27,7 @@ def _createMarkdownTableHeader(columns: dict) -> str:
     return out
 
 
-def _createMarkdownTableRow(columns: dict, row: dict) -> str:
+def _create_markdown_table_row(columns: dict, row: dict) -> str:
     out = ""
 
     for column, length in columns.items():
@@ -40,7 +40,7 @@ def _createMarkdownTableRow(columns: dict, row: dict) -> str:
     return out
 
 
-def _createMarkdownTable(rows: list):
+def _create_markdown_table(rows: list):
     columns = {}
 
     for row in rows:
@@ -52,14 +52,14 @@ def _createMarkdownTable(rows: list):
             if value_length > columns[key]:
                 columns[key] = value_length
 
-    out = _createMarkdownTableHeader(columns)
+    out = _create_markdown_table_header(columns)
     for row in rows:
-        out += _createMarkdownTableRow(columns, row)
+        out += _create_markdown_table_row(columns, row)
 
     return out
 
 
-def createMarkdownTableReport(diffs: list[LabelDiff]):
+def create_markdown_table_report(diffs: list[LabelDiff]):
     rows = []
 
     for diff in diffs:
@@ -87,13 +87,13 @@ def createMarkdownTableReport(diffs: list[LabelDiff]):
             },
         )
 
-    return _createMarkdownTable(rows)
+    return _create_markdown_table(rows)
 
 
-def createMarkdownReport(diff: LabelDiff):
+def create_markdown_report(diff: LabelDiff):
     out = f"## Repository: {diff.repository}\n"
 
-    if not diff.isChange():
+    if not diff.is_change():
         out += "\nNothing to change!\n"
         return out
 
@@ -118,16 +118,26 @@ def createMarkdownReport(diff: LabelDiff):
         for label in diff.diff:
             out += f"- {label['truth']['name']}\n"
             if "color" in label["delta"]:
-                out += f"  - Change color from '{label['actual']['color']}' to '{label['truth']['color']}'\n"
+                out += (
+                    f"  - Change color from '{label['actual']['color']}' "
+                    f"to '{label['truth']['color']}'\n"
+                )
             if "description" in label["delta"]:
-                out += f"  - Change description from '{label['actual']['description']}' to '{label['truth']['description']}'\n"
+                out += (
+                    "  - Change description from "
+                    f"'{label['actual']['description']}' to "
+                    f"'{label['truth']['description']}'\n"
+                )
             if "name" in label["delta"]:
-                out += f"  - Rename from '{label['actual']['name']}' to '{label['truth']['name']}'\n"
+                out += (
+                    f"  - Rename from '{label['actual']['name']}' to "
+                    f"'{label['truth']['name']}'\n"
+                )
 
     return out
 
 
-def terminalPrint(diff: LabelDiff, action: str, label: dict):
+def terminal_print(diff: LabelDiff, action: str, label: dict):
     print(f"{diff.namespace}/{diff.repository}: ", end="")
     if action == "delete":
         print(f"delete '{label['name']}'")
@@ -138,11 +148,14 @@ def terminalPrint(diff: LabelDiff, action: str, label: dict):
         name = label["actual"]["name"]
         if "color" in label["delta"]:
             changes.append(
-                f"change color of '{name}' from '{label['actual']['color']}' to '{label['truth']['color']}'",
+                f"change color of '{name}' from '{label['actual']['color']}' "
+                f"to '{label['truth']['color']}'",
             )
         if "description" in label["delta"]:
             changes.append(
-                f"change description of '{name}' from '{label['actual']['description']}' to '{label['truth']['description']}'",
+                f"change description of '{name}' from "
+                f"'{label['actual']['description']}' to "
+                f"'{label['truth']['description']}'",
             )
         if "name" in label["delta"]:
             changes.append(
