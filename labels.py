@@ -295,7 +295,7 @@ def _report(format: str, diffs: list[label_diff.LabelDiff]):
             print(f"# Namespace: {diffs[0].namespace}\n")
             print(reports.create_markdown_table_report(diffs))
         for diff in diffs:
-            if is_single_repo or diff.isChange():
+            if is_single_repo or diff.is_change():
                 print(reports.create_markdown_report(diff))
     elif format == "summary":
         print(reports.create_markdown_table_report(diffs))
