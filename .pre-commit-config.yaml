@@ -50,6 +50,11 @@ repos:
       - id: flake8
         additional_dependencies:
           - pep8-naming
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.16.0
+    hooks:
+      - id: mypy
+        args: [--strict, --ignore-missing-imports]
   - repo: https://github.com/thesyscall/no-commit
     rev: 1.0.0
     hooks:
