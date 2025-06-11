@@ -10,6 +10,18 @@ from label_diff import LabelDiff
 
 
 def _confirm() -> bool:
+    """
+    Checks user confirmation by prompting for input.
+
+    This function continuously prompts the user to confirm an action by typing
+    "y", "n", or pressing Enter. A response of "y" or an empty input (Enter)
+    indicates confirmation, while "n" expresses denial.
+    The function returns a boolean value based on the user's input.
+
+    Returns:
+        bool: True if the user confirms (input is "y" or empty), False if the
+        user denies (input is "n").
+    """
     while True:
         selection = input("Is this ok [Y/n]: ").lower()
         if selection == "n":
@@ -26,6 +38,15 @@ def apply_create(
     yes: bool = False,
     report: Optional[report_function] = None,
 ) -> None:
+    """
+    Apply all create statements in the diff
+
+    Arguments:
+        diff (LabelDiff): the generated diff containing the actions
+        yes (bool): did the user agree to all actions beforehand
+        report (report_function): a report function that displays the actions
+            to the user
+    """
     for label in diff.missing:
         if report is not None:
             report(diff, "create", label)
@@ -49,6 +70,15 @@ def apply_delete(
     yes: bool = False,
     report: Optional[report_function] = None,
 ) -> None:
+    """
+    Apply all delete statements in the diff
+
+    Arguments:
+        diff (LabelDiff): the generated diff containing the actions
+        yes (bool): did the user agree to all actions beforehand
+        report (report_function): a report function that displays the actions
+         to the user
+    """
     for label in diff.extra:
         if report is not None:
             report(diff, "delete", label)
@@ -70,6 +100,15 @@ def apply_modify(
     yes: bool = False,
     report: Optional[report_function] = None,
 ) -> None:
+    """
+    Apply all modify statements in the diff
+
+    Arguments:
+        diff (LabelDiff): the generated diff containing the actions
+        yes (bool): did the user agree to all actions beforehand
+        report (report_function): a report function that displays the actions
+        to the user
+    """
     for label in diff.diff:
         if report is not None:
             report(diff, "modify", label)
