@@ -10,6 +10,21 @@ from label_diff import LabelSpec
 
 
 def create_json_report(diff: LabelDiff) -> str:
+    """
+    Creates a JSON representation of the given LabelDiff object.
+
+    This function serializes a LabelDiff object into a JSON-formatted string,
+    providing a structured representation of differences in labels. The
+    output includes the namespace, repository, validity status, and
+    specific label differences.
+
+    Args:
+        diff (LabelDiff): The object containing label comparison data to
+        be converted into JSON format.
+
+    Returns:
+        str: A JSON-formatted string representing the label differences.
+    """
     return json.dumps(
         {
             "namespace": diff.namespace,
@@ -23,6 +38,24 @@ def create_json_report(diff: LabelDiff) -> str:
 
 
 def _create_markdown_table_header(columns: dict[str, Any]) -> str:
+    """
+    Generates a markdown table header string based on provided column names and
+    their respective lengths.
+
+    The function creates a header row for a markdown table using the provided
+    column names, and it appends a separator line indicating the column widths.
+    The first row represents the column titles, and the second row is a
+    separator made of dashes to delimit the column headers.
+
+    Parameters:
+        columns (dict[str, Any]): A dictionary where keys are the names of the
+            table columns, and
+        the values represent the column widths.
+
+    Returns:
+        str: A string containing the formatted markdown table header, including
+            both the column titles row and the separator row.
+    """
     out = _create_markdown_table_row(columns, {key: key for key in columns})
 
     for column, length in columns.items():
@@ -37,6 +70,20 @@ def _create_markdown_table_row(
     columns: dict[str, Any],
     row: dict[str, Any],
 ) -> str:
+    """
+    Generates a Markdown table row string by formatting given row data
+    according to specified column names and their corresponding lengths.
+
+    Args:
+        columns (dict[str, Any]): A dictionary where keys are column names and
+            values are the width of each column in characters.
+        row (dict[str, Any]): A dictionary representing a single row of data,
+            where keys are column names and values are their corresponding cell
+            content.
+
+    Returns:
+        str: A formatted string representing the Markdown table row.
+    """
     out = ""
 
     for column, length in columns.items():
@@ -50,6 +97,24 @@ def _create_markdown_table_row(
 
 
 def _create_markdown_table(rows: list[dict[str, Any]]) -> str:
+    """
+    Generates a markdown table string representation from a list of
+    dictionaries.
+
+    The function creates a markdown table based on the provided rows, where
+    each row is represented as a dictionary. It calculates the necessary column
+    widths based on the longest cell value or header in each column, aligns the
+    output, and properly formats header and rows to follow markdown table
+    conventions.
+
+    Args:
+        rows (list[dict[str, Any]]): A list of dictionaries representing rows,
+        where each dictionary contains column names as keys and row values as
+        values.
+
+    Returns:
+        str: A string representation of the markdown table.
+    """
     columns = {}
 
     for row in rows:
@@ -69,6 +134,21 @@ def _create_markdown_table(rows: list[dict[str, Any]]) -> str:
 
 
 def create_markdown_table_report(diffs: list[LabelDiff]) -> str:
+    """
+    Generates a markdown table report based on label differences.
+
+    This function processes a list of label differences to compute statistics
+    for each repository, including counts of missing, extra, renamed,
+    redescribed, and recolored labels. The data is then formatted into a
+    markdown table string.
+
+    Args:
+        diffs (list[LabelDiff]): The list of label differences to be processed.
+
+    Returns:
+        str: A string representation of the markdown table summarizing the
+            label differences.
+    """
     rows = []
 
     for diff in diffs:
@@ -100,6 +180,23 @@ def create_markdown_table_report(diffs: list[LabelDiff]) -> str:
 
 
 def create_markdown_report(diff: LabelDiff) -> str:
+    """
+    Generates a markdown report summarizing label modifications, additions, and
+    deletions based on the provided label difference data.
+
+    The function takes a `LabelDiff` object and constructs a markdown string
+    that outlines changes required to synchronize the repository labels with
+    the given specifications. The report includes sections for missing labels,
+    extra labels, and labels with differences in color, description, or name.
+
+    Arguments:
+        diff (LabelDiff): An object that represents the differences between the
+            actual repository labels and the desired label specifications.
+
+    Returns:
+        str: A markdown-formatted string summarizing the required label
+            changes.
+    """
     out = f"## Repository: {diff.repository}\n"
 
     if not diff.is_change():
@@ -157,6 +254,23 @@ def terminal_print(
     action: str,
     label: Union[Label, LabelSpec, LabelDelta],
 ) -> None:
+    """
+    Prints labeled differences between namespaces and repositories, describing
+    actions performed such as deleting, creating, or modifying labels.
+    The output is displayed in a human-readable format for console or terminal
+    visualization.
+
+    Parameters:
+        diff (LabelDiff): Represents the difference between labels in terms of
+            namespace and repository.
+        action (str): Specifies the action performed on the label. Possible
+            values include "delete", "create", or "modify".
+        label (Union[Label, LabelSpec, LabelDelta]): Represents the label
+            affected by the specified action and its associated details.
+
+    Returns:
+        None
+    """
     print(f"{diff.namespace}/{diff.repository}: ", end="")
     if action == "delete":
         assert isinstance(label, Label)
