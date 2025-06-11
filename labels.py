@@ -431,8 +431,8 @@ def _report(report_format: str, diffs: list[label_diff.LabelDiff]) -> None:
         diffs (list[label_diff.LabelDiff]): A list of label differences
             containing changes to be reported.
     """
+    is_single_repo = len(diffs) == 1
     if report_format == "markdown":
-        is_single_repo = len(diffs) == 1
         if not is_single_repo:
             print(f"# Namespace: {diffs[0].namespace}\n")
             print(reports.create_markdown_table_report(diffs))
@@ -443,13 +443,13 @@ def _report(report_format: str, diffs: list[label_diff.LabelDiff]) -> None:
         print(reports.create_markdown_table_report(diffs))
     elif report_format == "json":
         # FIXME: Super hacky
-        if len(diffs) > 0:
+        if not is_single_repo:
             data = []
             for diff in diffs:
                 data.append(json.loads(reports.create_json_report(diff)))
             print(json.dumps(data))
             return
-        print(reports.create_json_report(diff))
+        print(reports.create_json_report(diffs[0]))
     elif report_format == "none":
         pass  # Nothing to do
     else:
