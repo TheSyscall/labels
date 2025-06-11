@@ -25,16 +25,7 @@ def create_json_report(diff: LabelDiff) -> str:
     Returns:
         str: A JSON-formatted string representing the label differences.
     """
-    return json.dumps(
-        {
-            "namespace": diff.namespace,
-            "repository": diff.repository,
-            "valid": diff.valid,
-            "missing": diff.missing,
-            "extra": diff.extra,
-            "diff": diff.diff,
-        },
-    )
+    return json.dumps(diff.to_dict())
 
 
 def _create_markdown_table_header(columns: dict[str, Any]) -> str:
