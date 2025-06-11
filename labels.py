@@ -14,6 +14,7 @@ import actions
 import github_api
 import label_diff
 import reports
+from label_diff import LabelSpec
 
 
 def validate_json_schema(data: dict[str, Any]) -> bool:
@@ -53,7 +54,7 @@ def validate_json_schema(data: dict[str, Any]) -> bool:
     return True
 
 
-def read_labels_from_json_file(path: str) -> list[dict[str, Any]]:
+def read_labels_from_json_file(path: str) -> list[LabelSpec]:
     if not os.path.exists(path):
         print(f"File not found: {path}", file=sys.stderr)
         exit(1)
@@ -69,10 +70,11 @@ def read_labels_from_json_file(path: str) -> list[dict[str, Any]]:
 
         validate_json_schema(data)
 
-        labels = data["labels"]
-        assert isinstance(labels, list)
+        result: list[LabelSpec] = []
+        for jdata in data["labels"]:
+            result.append(LabelSpec.from_dict(jdata))
 
-        return labels
+        return result
     except json.JSONDecodeError as e:
         print(
             f"Error while decoding json file '{path}' in"
@@ -91,7 +93,7 @@ def read_labels_from_json_file(path: str) -> list[dict[str, Any]]:
         exit(1)
 
 
-def load_source(source: str) -> list[dict[str, Any]]:
+def load_source(source: str) -> list[LabelSpec]:
     return read_labels_from_json_file(source)
 
 
@@ -329,7 +331,7 @@ def _report(format: str, diffs: list[label_diff.LabelDiff]) -> None:
 def command_report_namespace(
     args: Any,
     namespace: str,
-    truth: list[dict[str, Any]],
+    truth: list[LabelSpec],
 ) -> None:
     (repos, err) = github_api.fetch_repositories(namespace)
     if err is not None:
@@ -367,7 +369,7 @@ def command_report_repository(
     args: Any,
     namespace: str,
     repository: str,
-    truth: list[dict[str, Any]],
+    truth: list[LabelSpec],
 ) -> None:
     (repo, err) = github_api.fetch_labels(namespace, repository)
     if err is not None:
@@ -405,7 +407,7 @@ def _apply(args: Any, diff: label_diff.LabelDiff) -> None:
 def command_sync_namespace(
     args: Any,
     namespace: str,
-    truth: list[dict[str, Any]],
+    truth: list[LabelSpec],
 ) -> None:
     (repos, err) = github_api.fetch_repositories(namespace)
     if err is not None:
@@ -439,7 +441,7 @@ def command_sync_repository(
     args: Any,
     namespace: str,
     repository: str,
-    truth: list[dict[str, Any]],
+    truth: list[LabelSpec],
 ) -> None:
     (repo, err) = github_api.fetch_labels(namespace, repository)
     if err is not None:
