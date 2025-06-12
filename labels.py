@@ -133,7 +133,7 @@ def read_labels_from_json_file(path: str) -> list[LabelSpec]:
         exit(1)
 
 
-def load_source(source: str) -> list[LabelSpec]:
+def load_source(source: list[str]) -> list[LabelSpec]:
     """
     Loads label specifications from a specified source.
 
@@ -142,14 +142,25 @@ def load_source(source: str) -> list[LabelSpec]:
     needed for labeling purposes.
 
     Arguments:
-        source (str): The path to the JSON file containing label
+        source (list[str]): A list of paths to JSON files containing label
             specifications.
 
     Returns:
         list[LabelSpec]: A list of label specification objects loaded from the
             file.
     """
-    return read_labels_from_json_file(source)
+    labels = {}
+    for file in source:
+        file_labels = read_labels_from_json_file(file)
+        for label in file_labels:
+            if label.name in labels:
+                print(
+                    "Warning: Duplicate label '{label.name}'!",
+                    file=sys.stderr,
+                )
+                continue
+            labels[label.name] = label
+    return list(labels.values())
 
 
 def parse_target(target: str) -> Tuple[str, Optional[str]]:
@@ -234,6 +245,7 @@ def parse_arguments() -> Any:
         "-s",
         "--source",
         required=True,
+        action="append",
         help="Path to the label source (file path)",
     )
 
@@ -281,6 +293,7 @@ def parse_arguments() -> Any:
         "-s",
         "--source",
         required=True,
+        action="append",
         help="Path to the label source (file path)",
     )
 
