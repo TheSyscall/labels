@@ -17,7 +17,11 @@ def fetch_json(
     params: dict[str, Any] = {},
     body: dict[str, Any] = {},
     method: str = "GET",
-) -> Tuple[Union[dict[str, Any], list[dict[str, Any]]], int, dict[str, Any]]:
+) -> Tuple[
+    Union[dict[str, Any], list[dict[str, Any]], str],
+    int,
+    dict[str, Any],
+]:
     """
     Fetches JSON data from a specified API endpoint using a given HTTP method.
     Supports GET, POST, PATCH, and DELETE methods. The function accepts query
@@ -88,12 +92,13 @@ def fetch_json(
                 headers=headers,
             )
 
-    result = response.content
-    try:
-        result = response.json()
-    except json.JSONDecodeError as e:
-        print(f"Failed to decode API response! {e.msg}", file=sys.stderr)
-        exit(1)
+    result = response.text
+    if response.text != "":
+        try:
+            result = response.json()
+        except json.JSONDecodeError as e:
+            print(f"Failed to decode API response! {e.msg}", file=sys.stderr)
+            exit(1)
 
     return result, response.status_code, dict(response.headers)
 
