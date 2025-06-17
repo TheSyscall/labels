@@ -270,6 +270,7 @@ def parse_arguments() -> Any:
             "markdown",
             "json",
             "summary",
+            "summary-csv",
             "matrix",
             "matrix-csv",
         ],
@@ -406,6 +407,7 @@ def parse_arguments() -> Any:
         choices=[
             "markdown",
             "summary",
+            "summary-csv",
             "matrix",
             "matrix-csv",
         ],
@@ -450,6 +452,7 @@ def _report(report_format: str, diffs: list[label_diff.LabelDiff]) -> None:
 
             - "markdown": Outputs a Markdown-styled report.
             - "summary": Outputs a Markdown-styled summary in table format.
+            - "summary-csv": same as summary but as a csv file
             - "json": Outputs a JSON representation of the differences.
             - "matrix": Outputs a markdown table where every combination of
               label and repository is listed
@@ -468,6 +471,8 @@ def _report(report_format: str, diffs: list[label_diff.LabelDiff]) -> None:
                 print(reports.create_markdown_report(diff))
     elif report_format == "summary":
         print(reports.create_markdown_table_report(diffs))
+    elif report_format == "summary-csv":
+        print(reports.create_csv_table_report(diffs))
     elif report_format == "matrix":
         print(reports.create_markdown_matrix_report(diffs))
     elif report_format == "matrix-csv":

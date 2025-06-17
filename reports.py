@@ -151,22 +151,7 @@ def _create_csv_table(rows: list[dict[str, Any]]) -> str:
     return output.getvalue()
 
 
-def create_markdown_table_report(diffs: list[LabelDiff]) -> str:
-    """
-    Generates a markdown table report based on label differences.
-
-    This function processes a list of label differences to compute statistics
-    for each repository, including counts of missing, extra, renamed,
-    redescribed, and recolored labels. The data is then formatted into a
-    markdown table string.
-
-    Args:
-        diffs (list[LabelDiff]): The list of label differences to be processed.
-
-    Returns:
-        str: A string representation of the markdown table summarizing the
-            label differences.
-    """
+def _generate_summary_table(diffs: list[LabelDiff]) -> list[dict[str, Any]]:
     rows = []
 
     for diff in diffs:
@@ -194,10 +179,60 @@ def create_markdown_table_report(diffs: list[LabelDiff]) -> str:
             },
         )
 
+    return rows
+
+
+def create_markdown_table_report(diffs: list[LabelDiff]) -> str:
+    """
+    Generates a markdown table report based on label differences.
+
+    This function processes a list of label differences to compute statistics
+    for each repository, including counts of missing, extra, renamed,
+    redescribed, and recolored labels. The data is then formatted into a
+    markdown table string.
+
+    Args:
+        diffs (list[LabelDiff]): The list of label differences to be processed.
+
+    Returns:
+        str: A string representation of the markdown table summarizing the
+            label differences.
+    """
+    rows = _generate_summary_table(diffs)
     return _create_markdown_table(rows)
 
 
+def create_csv_table_report(diffs: list[LabelDiff]) -> str:
+    """
+    Generates a markdown table report based on label differences.
+
+    This function processes a list of label differences to compute statistics
+    for each repository, including counts of missing, extra, renamed,
+    redescribed, and recolored labels. The data is then formatted into a
+    markdown table string.
+
+    Args:
+        diffs (list[LabelDiff]): The list of label differences to be processed.
+
+    Returns:
+        str: A string representation of the csv table summarizing the
+            label differences.
+    """
+    rows = _generate_summary_table(diffs)
+    return _create_csv_table(rows)
+
+
 def _generate_matrix_table(diffs: list[LabelDiff]) -> list[dict[str, str]]:
+    """
+    Generates a table listing all repositories and labels
+
+    Args:
+        diffs (list[LabelDiff]): The list of label differences to be processed.
+
+    Returns:
+        list[dict[str, str]]: A list of entries that contains a matrix of all
+            repositories and labels
+    """
     labels: list[str] = []
     repos: dict[str, dict[str, str]] = {}
 
@@ -254,6 +289,16 @@ def create_markdown_matrix_report(diffs: list[LabelDiff]) -> str:
 
 
 def create_csv_matrix_report(diffs: list[LabelDiff]) -> str:
+    """
+    Generates a csv table report listing all repositories and labels
+
+    Args:
+        diffs (list[LabelDiff]): The list of label differences to be processed.
+
+    Returns:
+        str: A string representation of the markdown table that contains a
+            matrix of all repositories and labels
+    """
     table = _generate_matrix_table(diffs)
     return _create_csv_table(table)
 
