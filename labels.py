@@ -266,7 +266,7 @@ def parse_arguments() -> Any:
     report_parser.add_argument(
         "-f",
         "--format",
-        choices=["markdown", "json", "summary"],
+        choices=["markdown", "json", "summary", "matrix"],
         default="markdown",
         help="Output format (default: markdown)",
     )
@@ -397,7 +397,7 @@ def parse_arguments() -> Any:
     reformat_parser.add_argument(
         "-f",
         "--format",
-        choices=["markdown", "summary"],
+        choices=["markdown", "summary", "matrix"],
         default="markdown",
         help="Output format (default: markdown)",
     )
@@ -454,6 +454,8 @@ def _report(report_format: str, diffs: list[label_diff.LabelDiff]) -> None:
                 print(reports.create_markdown_report(diff))
     elif report_format == "summary":
         print(reports.create_markdown_table_report(diffs))
+    elif report_format == "matrix":
+        print(reports.create_markdown_matrix_report(diffs))
     elif report_format == "json":
         # FIXME: Super hacky
         if not is_single_repo:
