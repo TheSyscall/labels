@@ -170,6 +170,57 @@ def create_markdown_table_report(diffs: list[LabelDiff]) -> str:
     return _create_markdown_table(rows)
 
 
+def create_markdown_matrix_report(diffs: list[LabelDiff]) -> str:
+    """
+    Generates a markdown table report listing all repositories and labels
+
+    Args:
+        diffs (list[LabelDiff]): The list of label differences to be processed.
+
+    Returns:
+        str: A string representation of the markdown table that contains a
+            matrix of all repositories and labels
+    """
+    labels: list[str] = []
+    repos: dict[str, dict[str, str]] = {}
+
+    for diff in diffs:
+        if diff.repository not in repos:
+            repos[diff.repository] = {}
+
+        for label in diff.valid:
+            if label.name not in labels:
+                labels.append(label.name)
+            repos[diff.repository][label.name] = "Valid"
+
+        for label in diff.missing:
+            if label.name not in labels:
+                labels.append(label.name)
+            repos[diff.repository][label.name] = "Missing"
+
+        for label in diff.extra:
+            if label.name not in labels:
+                labels.append(label.name)
+            repos[diff.repository][label.name] = "Delete"
+
+        for label_diff in diff.diff:
+            if label_diff.spec.name not in labels:
+                labels.append(label_diff.spec.name)
+            repos[diff.repository][label_diff.spec.name] = "Change"
+
+    table: list[dict[str, str]] = []
+    for name, content in repos.items():
+        row = {
+            "Repository": name,
+        }
+        row.update(
+            dict(sorted(content.items(), key=lambda item: item[0].lower())),
+        )
+        table.append(row)
+
+    return _create_markdown_table(table)
+
+
 def create_markdown_report(diff: LabelDiff) -> str:
     """
     Generates a markdown report summarizing label modifications, additions, and
