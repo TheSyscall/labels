@@ -266,7 +266,13 @@ def parse_arguments() -> Any:
     report_parser.add_argument(
         "-f",
         "--format",
-        choices=["markdown", "json", "summary", "matrix"],
+        choices=[
+            "markdown",
+            "json",
+            "summary",
+            "matrix",
+            "matrix-csv",
+        ],
         default="markdown",
         help="Output format (default: markdown)",
     )
@@ -397,7 +403,12 @@ def parse_arguments() -> Any:
     reformat_parser.add_argument(
         "-f",
         "--format",
-        choices=["markdown", "summary", "matrix"],
+        choices=[
+            "markdown",
+            "summary",
+            "matrix",
+            "matrix-csv",
+        ],
         default="markdown",
         help="Output format (default: markdown)",
     )
@@ -440,6 +451,9 @@ def _report(report_format: str, diffs: list[label_diff.LabelDiff]) -> None:
             - "markdown": Outputs a Markdown-styled report.
             - "summary": Outputs a Markdown-styled summary in table format.
             - "json": Outputs a JSON representation of the differences.
+            - "matrix": Outputs a markdown table where every combination of
+              label and repository is listed
+            - "matrix-csv": same as matrix but as a csv file
             - "none": Produces no output.
         diffs (list[label_diff.LabelDiff]): A list of label differences
             containing changes to be reported.
@@ -456,6 +470,8 @@ def _report(report_format: str, diffs: list[label_diff.LabelDiff]) -> None:
         print(reports.create_markdown_table_report(diffs))
     elif report_format == "matrix":
         print(reports.create_markdown_matrix_report(diffs))
+    elif report_format == "matrix-csv":
+        print(reports.create_csv_matrix_report(diffs))
     elif report_format == "json":
         # FIXME: Super hacky
         if not is_single_repo:
